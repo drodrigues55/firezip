@@ -631,6 +631,8 @@ public abstract class ArchiveProviderBase : IArchiveProvider
                         FilesProcessed = filesProcessed,
                         TotalFiles = totalFiles,
                         CurrentItemName = itemName,
+                        ItemBytesProcessed = entryBytesWritten,
+                        ItemTotalBytes = entrySize,
                         BytesPerSecond = speed,
                         EstimatedTimeRemaining = eta,
                         OperationPhase = "Extracting"

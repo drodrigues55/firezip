@@ -993,33 +993,258 @@ Deliver:
 
 ---
 
-## Milestone 10 — Release Candidate
+## Milestone 10 — Finalização da Base Atual & Homologação RC
 
-Perform:
+> **Status:** Concluído (Complete) ✅  
+> **Resultado:** 123 testes aprovados (100%), 0 erros, 0 warnings (.NET 10).
 
-* Full regression testing
-* Compatibility testing
-* Security testing
-* Performance testing
-* Clean-install testing
-* Upgrade testing
-* Uninstall testing
-* Windows 10 testing
-* Windows 11 testing
+Consolidação completa da base técnica do produto antes da etapa de publicação:
+* **Compatibilidade Multi-Formato & Corpus:** Suporte completo de leitura e escrita para ZIP, 7Z, TAR, GZ, BZ2 e extração de RAR, testado contra caminhos longos, caracteres Unicode/acentuação/emojis e árvores com mais de 15 níveis.
+* **Segurança & Hardening:** Proteção ativa contra Zip Slip, path traversal, streams ADS, dispositivos reservados DOS e bombas de descompressão (*Zip Bombs*) com monitoramento de streaming.
+* **Internacionalização (i18n):** Suporte nativo e alternância em tempo de execução para Português do Brasil (`pt-BR`) e Inglês (`en-US`), com catálogo de recursos e formatação localizada.
+* **Experiência de Extração com Duplo Clique (Estilo Bandizip):** Ação configurável via preferências para duplo clique em arquivos compactados (`Abrir na Interface`, `Extrair Aqui`, `Extrair em Subpasta`, `Extrair em Pasta Pré-definida`, `Perguntar Destino`), executando diretamente sem carregar a interface pesada.
+* **Interface de Extração Avançada (`TaskProgressWindow`):** Dupla barra de progresso (barra do item atual `ItemProgressBar` + barra global `TaskProgressBar`), painel expansível (*expander*) com estatísticas analíticas de taxa de compressão (ratio %, tamanhos compactado/descompactado, espaço economizado, velocidade MB/s, tempo e ETA), caixas de seleção (*tickers*) para abrir pasta e manter janela aberta, e botões pós-extração (*Abrir Pasta*, *Excluir arquivo de origem .zip*, *Fechar*).
+* **Isolamento de Configurações:** Preferências do usuário armazenadas de forma desacoplada em `%APPDATA%\Firezip\settings.json` (Roaming), imunes a desinstalações limpas, reinstalações ou atualizações do sistema.
+* **Integração com Shell do Windows 10/11:** Registro formal de `Capabilities`, `RegisteredApplications`, chaves de `OpenWithProgids`, `Applications\Firezip.UI.exe` e disparo de notificação nativa `SHChangeNotify(SHCNE_ASSOCCHANGED)`.
+* **Diálogo Nativo "Sobre o Firezip":** Diálogo WinUI 3 Fluent exibindo versão do assembly, runtime, licença MIT e links oficiais.
 
 ---
 
-## Milestone 11 — General Availability (GA) & Internationalization (i18n)
+## Milestone 11 — Release Engineering & Packaging
 
-Deliver:
+> **Status:** Implementado (Aguardando validação formal de máquina limpa) 🟡  
+> **Objetivo:** Definir, gerar e auditar o artefato final de distribuição x64 para o ecossistema Windows e WinGet.
 
-* Production-ready versioning unified at v1.0.0 (`Directory.Build.props`)
-* Full assembly and package metadata (Company, Copyright 2026, MIT license, repository links)
-* Multi-language / Internationalization framework (`ILocalizationService`, `LocalizationService`)
-* Complete catalog in English (`en-US`) and Brazilian Portuguese (`pt-BR`)
-* Runtime and settings language switcher (`LanguageComboBox`)
-* Winget v1.0.0 manifests including dedicated `pt-BR` locale manifest
-* Dedicated sub-plan: [MILESTONE_11_PLAN.md](file:///c:/Users/DRODRIGUES/Documents/firezip/MILESTONE_11_PLAN.md)
+### 1. Especificação do Artefato
+* **Plataforma & Arquitetura:** Windows 10 / Windows 11 (x64 nativo).
+* **Versão Unificada:** Sincronizada em `Directory.Build.props`, `firezip_setup.iss`, scripts de build e manifestos.
+* **Nomenclatura do Instalador:** `FirezipSetup-x64-v<Version>.exe` (padronizado e sem caracteres especiais).
+* **Tipo Real do Instalador:** **`inno`** (Inno Setup Compiler 6.7.3).  
+  *Critério Mandatório:* O WinGet deve identificar explicitamente `InstallerType: inno`. Nunca assumir `InstallerType: exe` genérico.
+* **Método de Empacotamento:** Automação via script PowerShell `packaging/build_installer.ps1`, que compila os binários em Release, cria o payload comprimido e executa `ISCC.exe`.
+
+### 2. Validação do Comportamento do Instalador
+* `[Implementado]` **Instalação Silenciosa:** Suporte nativo aos switches Inno Setup:
+  ```powershell
+  FirezipSetup-x64-v<Version>.exe /VERYSILENT /SUPPRESSMSGBOXES /NORESTART /SP-
+  ```
+* `[Implementado]` **Instalação com Progresso (SilentWithProgress):**
+  ```powershell
+  FirezipSetup-x64-v<Version>.exe /SILENT /SUPPRESSMSGBOXES /NORESTART /SP-
+  ```
+* `[Implementado]` **Comportamento Não Interativo:** Configuração de `skipifsilent` em todas as entradas de inicialização pós-instalação (`[Run]`) do Inno Setup para garantir que nenhum diálogo, aplicativo ou navegador seja aberto durante a execução silenciosa em pipelines do WinGet.
+* `[Implementado]` **Escopo e Localização:** `Scope: machine`, instalando por padrão no diretório de programas do Windows: `{autopf}\Firezip` (`C:\Program Files\Firezip`).
+* `[Implementado]` **Controle de Elevação e UAC:** Instalação em máquina exige elevação de privilégios de administrador. `PrivilegesRequiredOverridesAllowed=commandline dialog` configurado para compatibilidade.
+* `[Implementado]` **Entrada em Apps & Features (Registro de Desinstalação):**
+  - Chave de desinstalação: `HKLM\Software\Microsoft\Windows\CurrentVersion\Uninstall\{8B036367-AE8C-4D88-B1F3-E18F2E23A534}_is1`
+  - Campos registrados: `DisplayName`, `DisplayVersion`, `Publisher`, `UninstallString`, `QuietUninstallString`, `DisplayIcon`, `URLInfoAbout`, `InstallLocation`.
+* `[Implementado]` **Desinstalação Limpa:** Binário `unins000.exe` gerado em `{app}`, suportando `/VERYSILENT /SUPPRESSMSGBOXES /NORESTART`.
+
+---
+
+## Milestone 12 — Security & Installer Audit
+
+> **Status:** Implementado (Aguardando auditoria em ambiente Windows Sandbox) 🟡  
+> **Objetivo:** Executar auditoria profunda de segurança, integridade de componentes e ausência de comportamento persistente indevido.
+
+### 1. Garantia da Arquitetura de Isolamento de Rede
+Confirmar e auditar que a divisão arquitetural do Firezip permanece estritamente preservada:
+```text
+Firezip.UI.exe
+    └── Aplicativo Principal & Motor de Extração
+        └── 100% ISOLADO DA REDE (Zero permissões de rede, sem chamadas HTTP, sem sockets)
+
+FirezipUpdater.exe
+    └── Processo Separado de Atualização
+        └── Conexões HTTPS restritas aos endpoints de release oficial
+        └── Validação criptográfica de integridade de pacote com assinatura RSA-SHA256 (2048 bits)
+```
+*Critério:* Não alterar essa divisão de isolamento. O executável principal de interface nunca deve realizar requisições de rede.
+
+### 2. Matriz de Auditoria do Instalador
+* `[Implementado]` **Integridade do Instalador:** Compressão de alta taxa `lzma2/ultra64` em modo sólido com processo isolado (`LZMAUseSeparateProcess=yes`).
+* `[Implementado]` **Ausência de Arquivos Inesperados:** Apenas `Firezip.UI.exe`, `FirezipUpdater.exe` e os aliases legados são instalados em `{app}`.
+* `[Implementado]` **Autonomia de Runtimes & Dependências:** Executável publicado como single-file com assemblies do .NET 10 e Windows App SDK empacotados, sem dependências externas ausentes ou instaladores secundários em cadeia.
+* `[Implementado]` **Componentes Persistentes & Tarefas Agendadas:**
+  - O instalador pode criar opcionalmente a tarefa agendada `Firezip\FirezipUpdateTask` (`schtasks /Create`) para checagem diária silenciosa de atualizações via `FirezipUpdater.exe --auto --silent`.
+  - A desinstalação garante a exclusão estrita da tarefa (`schtasks /Delete /TN "Firezip\FirezipUpdateTask" /F`).
+  - Nenhum serviço Windows de inicialização em segundo plano é criado.
+* `[Implementado]` **Auditoria de Registro:** Gravação apenas de chaves oficiais de shell (`Firezip.Archive`), associações (`OpenWithProgids`), capacidades do Windows 10/11 (`Capabilities`, `RegisteredApplications`) e desinstalação.
+* `[Implementado]` **Desinstalação Completa:** Remoção total de todos os arquivos de `{app}` e das chaves de registro.
+* `[Implementado]` **Preservação de Dados do Usuário:** A desinstalação não apaga o diretório `%APPDATA%\Firezip`, garantindo que reinstalações e atualizações não causem perda de preferências do usuário.
+
+---
+
+## Milestone 13 — WinGet Preflight
+
+> **Status:** Em Andamento ⏳  
+> **Objetivo:** Gate obrigatório com verificação formal de todos os requisitos do WinGet antes da submissão do Pull Request.
+
+### Checklist Obrigatório Pré-Submissão (26 Itens)
+
+```text
+[x] 01. Instalador final x64 gerado (FirezipSetup-x64-v1.0.0.exe / v1.0.1.exe)
+[x] 02. InstallerType identificado corretamente como 'inno'
+[x] 03. Instalação silenciosa testada localmente (/VERYSILENT /SUPPRESSMSGBOXES /NORESTART /SP-)
+[x] 04. SilentWithProgress testado localmente (/SILENT /SUPPRESSMSGBOXES /NORESTART /SP-)
+[ ] 05. Instalação feita a partir de terminal não elevado (UAC prompt e fallback)
+[ ] 06. Instalação em Windows Sandbox limpo testada
+[x] 07. Aplicativo inicia após instalação
+[x] 08. Executável principal pode ser localizado em C:\Program Files\Firezip\Firezip.UI.exe
+[x] 09. Aplicativo executa corretamente e realiza operações de arquivo após instalação
+[x] 10. Desinstalação silenciosa testada (unins000.exe /VERYSILENT /SUPPRESSMSGBOXES /NORESTART)
+[x] 11. Desinstalação limpa confirmada (arquivos e atalhos removidos)
+[x] 12. Dependências verificadas (zero DLLs faltantes)
+[x] 13. Runtime necessário verificado (pacote auto-contido .NET 10 + WinAppSDK)
+[x] 14. SHA256 calculado via algoritmo oficial SHA-256
+[x] 15. SHA256 confirmado e confrontado com o binário distribuído
+[x] 16. URL final usa HTTPS (https://github.com/drodrigues55/firezip/releases/...)
+[x] 17. URL aponta diretamente para o instalador (.exe direto)
+[x] 18. URL não depende de redirect dinâmico ou página intermediária
+[x] 19. URL é estável e imutável
+[x] 20. URL é específica para a versão (/download/v1.0.0/ ou /v1.0.1/)
+[x] 21. URL pertence a uma fonte controlada pelo publisher (github.com/drodrigues55/firezip)
+[x] 22. Página oficial do projeto aponta para o instalador (README.md e GitHub Releases)
+[x] 23. Manifesto WinGet multi-file criado no schema 1.9.0
+[x] 24. 'winget validate --manifest' passa com êxito (100% de conformidade de schema)
+[ ] 25. 'winget install --manifest' testado localmente em máquina de homologação
+[ ] 26. Desinstalação após instalação via manifest testada com sucesso
+```
+
+### Matriz de Pendências do Preflight
+
+| Item Pendente | Motivo | Impacto | Ação Necessária | Responsável | Condição de Conclusão |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **05. Terminal não elevado** | Teste executado em console de build elevado | Validar elevação UAC adequada | Rodar instalador em PowerShell não admin e verificar elevação UAC | Equipe Release | Instalação solicita UAC e completa com sucesso |
+| **06. Windows Sandbox** | Ambiente de desenvolvimento possui ferramentas já instaladas | Garantir ausência de dependências ocultas | Executar script em Windows Sandbox puro (sem .NET pré-instalado) | Equipe QA | App abre e extrai sem erros no Sandbox |
+| **25. winget install local** | Requer pacote e manifesto em máquina isolada | Simular execução exata do pipeline do WinGet | Executar `winget install --manifest <caminho>` | Equipe Release | Comando conclui com código 0 e registra app |
+| **26. Desinstalação pós-winget** | Validar desinstalação disparada pelo WinGet CLI | Garantir desinstalação limpa via gerenciador | Executar `winget uninstall Firezip.Firezip` | Equipe Release | WinGet remove pacote sem erros |
+
+---
+
+## Milestone 14 — WinGet Manifest
+
+> **Status:** Implementado & Validado Localmente ✅  
+> **Objetivo:** Estruturar o conjunto oficial de manifestos no formato multi-file aceito pelo WinGet.
+
+### 1. Estrutura de Diretórios e Arquivos (Schema v1.9.0)
+Caminho oficial: `packaging/winget/manifests/f/Firezip/Firezip/<Version>/`
+
+1. **`Firezip.Firezip.yaml` (Version Manifest):**
+   - `PackageIdentifier`: `Firezip.Firezip`
+   - `PackageVersion`: `<Version>` (ex: `1.0.0` ou `1.0.1`)
+   - `DefaultLocale`: `en-US`
+   - `ManifestType`: `version`
+   - `ManifestVersion`: `1.9.0`
+2. **`Firezip.Firezip.installer.yaml` (Installer Manifest):**
+   - `InstallerType`: `inno`
+   - `Scope`: `machine`
+   - `InstallModes`: `[ interactive, silent, silentWithProgress ]`
+   - `InstallerSwitches`:
+     - `Silent`: `/VERYSILENT /SUPPRESSMSGBOXES /NORESTART /SP-`
+     - `SilentWithProgress`: `/SILENT /SUPPRESSMSGBOXES /NORESTART /SP-`
+   - `UpgradeBehavior`: `install`
+   - `ProductCode`: `'{8B036367-AE8C-4D88-B1F3-E18F2E23A534}_is1'`
+   - `FileExtensions`: `[ zip, 7z, rar, tar, gz, bz2 ]`
+   - `Architecture`: `x64`
+   - `InstallerUrl`: URL HTTPS direta e versionada no GitHub Releases
+   - `InstallerSha256`: Hash SHA-256 maiúsculo de 64 caracteres gerado do arquivo final
+3. **`Firezip.Firezip.locale.en-US.yaml` (Default Locale Manifest):**
+   - Metadados completos em inglês: `Publisher`, `PackageName`, `License` (`MIT`), `LicenseUrl` (apontando para URL pública com retorno 200 OK), `ShortDescription`, `Description`, `Moniker` (`firezip`), `Tags` e `ReleaseNotesUrl`.
+4. **`Firezip.Firezip.locale.pt-BR.yaml` (Locale Manifest pt-BR):**
+   - Metadados completos localizados em Português do Brasil.
+
+### 2. Validação Local de Schema
+* Executado via comando oficial:
+  ```powershell
+  winget validate --manifest packaging/winget/manifests/f/Firezip/Firezip/<Version>/
+  ```
+* *Resultado:* **Êxito na validação do manifesto (100% de conformidade com os schemas do WinGet).**
+
+---
+
+## Milestone 15 — WinGet Submission
+
+> **Status:** Em Andamento (PR submetido, aguardando validação do pipeline) ⏳  
+> **Objetivo:** Submeter e manter o Pull Request oficial no repositório `microsoft/winget-pkgs`.
+
+### 1. Regras de Estrutura do Pull Request
+* **Isolamento Estrito:** O PR contém **exclusivamente** os 4 arquivos YAML do manifesto no caminho:
+  `manifests/f/Firezip/Firezip/<Version>/`
+* **Zero Arquivos Espúrios:** Nenhuma alteração em código C#, scripts, README ou outros diretórios é incluída no mesmo PR.
+* **Casing e Nomenclatura:**
+  - Diretórios: `manifests/f/Firezip/Firezip/<Version>/`
+  - Arquivos: `Firezip.Firezip.*.yaml` (idêntico ao `PackageIdentifier`).
+* **Uma Única Versão:** Um único pacote e uma única versão por PR de submissão.
+
+### 2. Comandos de Homologação Pré-PR
+Executar obrigatoriamente antes do push do PR:
+```powershell
+# 1. Validação estática de schema
+winget validate --manifest packaging/winget/manifests/f/Firezip/Firezip/<Version>/
+
+# 2. Teste de instalação local direta via manifesto
+winget install --manifest packaging/winget/manifests/f/Firezip/Firezip/<Version>/
+```
+
+---
+
+## Milestone 16 — Validation / Fixes (Tratamento de Falhas do Pipeline)
+
+> **Status:** Em Execução Ativa 🔄  
+> **Objetivo:** Monitorar o pipeline de CI do Azure Pipelines no `microsoft/winget-pkgs`, tratar erros e manter conformidade estrita.
+
+### Matriz de Resposta a Falhas de Validação do WinGet
+
+| Categoria de Falha | Código de Erro / Verificação | Causa Raiz Possível | O que corrigir no projeto / código | O que corrigir no manifesto | Exige novo instalador? | Depende de infra externa? |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| **Manifesto** | `Manifest-Validation-Error` / `Manifest-Installer-Validation-Error` | Campo obrigatório ausente, tipo incorreto ou erro de indentação YAML | Nenhuma alteração de código necessária | Corrigir sintaxe YAML ou valores dos campos | Não | Não |
+| **Manifesto** | `Manifest-Version-Deprecated` | Schema version desatualizada (ex: < 1.6.0) | Nenhuma alteração | Atualizar `$schema` e `ManifestVersion` para versão aceita (ex: `1.9.0`) | Não | Não |
+| **Manifesto** | `Manifest-Path-Error` | Arquivos fora do caminho `manifests/f/Firezip/Firezip/<version>/` | Nenhuma alteração | Mover arquivos para a árvore correta | Não | Não |
+| **Instalador** | `Error-Hash-Mismatch` | Checksum SHA-256 no YAML difere do binário baixado pela URL | Nenhuma alteração no código | Recalcular `Get-FileHash` e atualizar `InstallerSha256` | Não | Sim (se o arquivo na release mudou) |
+| **Instalador** | `Error-Installer-Availability` | Instalador inacessível no momento do teste do bot | Nenhuma alteração | Verificar URL em `InstallerUrl` | Não | Sim (estabilidade do GitHub Releases) |
+| **Instalador** | `Binary-Validation-Error` | Executável corrompido ou arquitetura incompatível | Verificar arquitetura x64 no build do Inno Setup | Confirmar `Architecture: x64` | Sim | Não |
+| **URL** | `URL-Validation-Error` / `Validation-HTTP-Error` | URL retorna 404, 403, 500 ou quebra de link (ex: `LICENSE` inexistente) | Criar o arquivo no repositório (ex: `LICENSE` na branch `main`) | Atualizar URL se o link estiver apontando para caminho errado | Não | Sim (commit e push para o repositório público) |
+| **URL** | `Validation-Domain` / `Validation-Unapproved-URL` | URL de download fora do domínio do publisher | Hospedar instalador apenas no repositório oficial (`github.com/drodrigues55/firezip`) | Atualizar `InstallerUrl` | Não | Sim |
+| **URL** | `Validation-Indirect-URL` | URL passa por encurtador ou landing page intermediária | Nenhuma alteração | Garantir link direto `.exe` para o asset da release | Não | Sim |
+| **Instalação** | `Validation-Unattended-Failed` | Instalador abre janela, trava ou exige clique durante `/VERYSILENT` | Inserir `skipifsilent` nas ações pós-instalação do Inno Setup | Confirmar `InstallerSwitches.Silent` | Sim | Não |
+| **Instalação** | `Validation-Executable-Error` | Executável não inicia após a instalação no sandbox | Verificar dependências nativas e runtime empacotado | Confirmar `ProductCode` e caminhos de atalhos | Sim | Não |
+| **Instalação** | `Validation-Uninstall-Error` | Desinstalador falha ou deixa arquivos bloqueados | Ajustar seção `[UninstallRun]` e flags do Inno Setup | Verificar `AppsAndFeaturesEntries` | Sim | Não |
+| **Instalação** | `Validation-Defender-Error` | Falso positivo no Windows Defender / SmartScreen | Submeter binário para análise de falso positivo no portal da Microsoft | Nenhuma alteração no manifesto | Não | Sim (Microsoft Defender Portal) |
+| **Dependências**| `Validation-MSIX-Dependency` / `Validation-VCRuntime-Dependency` | Falta runtime VC++ ou pacote MSIX | Empacotar dependências estaticamente ou via single-file | Adicionar dependência se estritamente necessária | Sim | Não |
+| **Políticas** | `Policy-Test-*` / Assinatura CLA | Contribuidor não assinou o Microsoft CLA | Nenhuma alteração de código | Nenhuma alteração no manifesto | Não | Sim (Assinar CLA no portal Microsoft Open Source) |
+
+*Regra de Ouro:* **Nunca mascarar ou forçar metadados falsos** apenas para contornar uma regra de validação. Se um teste falhar, investigar a causa real (código, instalador, infraestrutura ou manifesto) e aplicar a correção definitiva.
+
+---
+
+## Milestone 17 — GA Release Audit
+
+> **Status:** Pendente de Validação Microsoft & Publicação ⏸️  
+> **Objetivo:** Auditoria final completa e fechamento de ciclo após aprovação do pacote no catálogo oficial do WinGet.
+
+### Checklist de Homologação Pós-Publicação
+* `[Pendente de validação Microsoft]` **Disponibilidade no Feed Oficial:** Verificar indexação do pacote no repositório central (`winget search Firezip`).
+* `[Pendente]` **Instalação Limpa via WinGet:**
+  ```powershell
+  winget install Firezip.Firezip
+  ```
+  Verificar que o download, verificação de hash SHA-256 e instalação silenciosa ocorrem sem intervenção e retornam código 0.
+* `[Pendente]` **Inicialização e Funcionamento:** Executar o aplicativo após instalação via WinGet e testar:
+  - Criação e extração de arquivos ZIP e 7Z.
+  - Ação de duplo clique configurada (Bandizip-style).
+  - Preservação da janela de progresso com estatísticas de compressão.
+* `[Pendente]` **Auditoria de Isolamento de Rede Pós-Instalação:** Confirmar via monitoramento de conexões que `Firezip.UI.exe` não realiza chamadas de rede.
+* `[Pendente]` **Auditoria de Desinstalação via WinGet:**
+  ```powershell
+  winget uninstall Firezip.Firezip
+  ```
+  Verificar que o pacote é removido de forma silenciosa, atalhos são excluídos e configurações em `%APPDATA%\Firezip` permanecem seguras.
+* `[Pendente]` **Consistência Ponta a Ponta:** Garantir correspondência 100% idêntica entre:
+  - Versão do assembly compilado (`Firezip.UI.exe`).
+  - Versão exibida no diálogo nativo *Sobre* e na UI.
+  - Versão da GitHub Release e arquivos anexados.
+  - Versão publicada no catálogo oficial do WinGet.
 
 ---
 

@@ -13,6 +13,19 @@ public record OperationProgress
     public double BytesPerSecond { get; init; }
     public TimeSpan? EstimatedTimeRemaining { get; init; }
     public string OperationPhase { get; init; } = string.Empty;
+    public long ItemBytesProcessed { get; init; }
+    public long ItemTotalBytes { get; init; }
+    public long CompressedBytes { get; init; }
+
+    public double ItemPercentage =>
+        ItemTotalBytes > 0
+            ? Math.Clamp((double)ItemBytesProcessed / ItemTotalBytes * 100.0, 0.0, 100.0)
+            : (ItemBytesProcessed > 0 ? 100.0 : 0.0);
+
+    public double CompressionRatio =>
+        TotalBytes > 0 && CompressedBytes > 0
+            ? Math.Clamp((double)CompressedBytes / TotalBytes * 100.0, 0.0, 200.0)
+            : 0.0;
 
     public double Percentage
     {

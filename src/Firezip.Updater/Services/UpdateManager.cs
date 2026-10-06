@@ -31,7 +31,7 @@ public class UpdateManager
             Timeout = TimeSpan.FromSeconds(30)
         };
 
-        if (!_httpClient.DefaultRequestHeaders.UserAgent.Any())
+        if (_httpClient.DefaultRequestHeaders.UserAgent.Count == 0)
         {
             _httpClient.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("FirezipUpdater", "1.0"));
         }
@@ -39,7 +39,7 @@ public class UpdateManager
 
     public void Log(string message)
     {
-        var timestamp = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss");
+        var timestamp = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss", System.Globalization.CultureInfo.InvariantCulture);
         _logAction?.Invoke($"[{timestamp}] {message}");
     }
 

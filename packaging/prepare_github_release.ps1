@@ -1,6 +1,7 @@
 # Prepares the complete GitHub Releases asset bundle for Firezip
 Param(
     [string]$Version = "1.0.0",
+    [string]$PrivateKeyFile,
     [switch]$Development,
     [switch]$SkipBuild
 )
@@ -60,7 +61,17 @@ finally {
 # 3. Generate and Sign manifest.json
 Write-Host "[3/4] Generating and signing update manifest..." -ForegroundColor Yellow
 $releaseScript = Join-Path $PSScriptRoot "release_update_package.ps1"
-if ($Development) {
+
+if (-not $PrivateKeyFile) {
+    $defaultKey = Join-Path $PSScriptRoot "keys\firezip_private_key.xml"
+    if (Test-Path $defaultKey) {
+        $PrivateKeyFile = $defaultKey
+    }
+}
+
+if ($PrivateKeyFile) {
+    & $releaseScript -Version $Version -PackagePath $installerTarget -OutputDir $releaseDir -PrivateKeyFile $PrivateKeyFile
+} elseif ($Development) {
     & $releaseScript -Version $Version -PackagePath $installerTarget -OutputDir $releaseDir -Development
 } else {
     & $releaseScript -Version $Version -PackagePath $installerTarget -OutputDir $releaseDir

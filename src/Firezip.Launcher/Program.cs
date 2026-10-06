@@ -71,7 +71,7 @@ internal static class Program
         }
         catch (Exception ex)
         {
-            MessageBox(IntPtr.Zero, ex.Message, "Firezip", MessageBoxIconError);
+            _ = MessageBox(IntPtr.Zero, ex.Message, "Firezip", MessageBoxIconError);
         }
     }
 
@@ -159,9 +159,9 @@ internal static class Program
     private static IntPtr _windowForProcess;
     private static int _targetProcessId;
 
-    private static bool CaptureWindowForProcess(IntPtr window, IntPtr _)
+    private static bool CaptureWindowForProcess(IntPtr window, IntPtr parameter)
     {
-        GetWindowThreadProcessId(window, out var processId);
+        _ = GetWindowThreadProcessId(window, out var processId);
         if (processId == (uint)_targetProcessId && GetWindow(window, GetWindowOwner) == IntPtr.Zero)
         {
             _windowForProcess = window;

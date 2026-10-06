@@ -1,11 +1,10 @@
+using System.Globalization;
 using Firezip.Core.Interfaces;
 using Firezip.Core.Models;
 using Firezip.Infrastructure.Logging;
-using Firezip.Infrastructure.Settings;
 using Firezip.Windows.Notifications;
 using Firezip.Windows.Shell;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.UI;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -21,7 +20,6 @@ public sealed partial class TaskProgressWindow : Window, IDisposable
     private readonly string _primaryPath;
     private readonly string _destinationPath;
     private readonly ConflictPolicy _conflictPolicy;
-    private readonly bool _openFolderAfter;
     private readonly ArchiveFormat _compressFormat;
     private readonly IReadOnlyList<string>? _sourcePaths;
     private readonly CompressionOptions? _compressionOptions;
@@ -34,6 +32,7 @@ public sealed partial class TaskProgressWindow : Window, IDisposable
     private readonly CancellationTokenSource _cts = new();
     private bool _isCompleted;
     private bool _hasStarted;
+    private long _sourceArchiveLength;
 
     public TaskProgressWindow(
         TaskType taskType,
@@ -51,7 +50,6 @@ public sealed partial class TaskProgressWindow : Window, IDisposable
         _primaryPath = primaryPath;
         _destinationPath = destinationPath;
         _conflictPolicy = conflictPolicy;
-        _openFolderAfter = openFolderAfter;
         _compressFormat = compressFormat;
         _sourcePaths = sourcePaths;
         _compressionOptions = compressionOptions ?? CompressionOptions.Default;
@@ -66,17 +64,25 @@ public sealed partial class TaskProgressWindow : Window, IDisposable
 
         ConfigureWindowSizeAndPosition();
 
+        // Initialize tickers from settings and constructor options
+        OpenFolderCheckBox.IsChecked = openFolderAfter || _settings.OpenExtractedFolderAfterExtraction;
+        KeepWindowOpenCheckBox.IsChecked = _settings.KeepTaskProgressWindowOpen;
+
         var fileName = Path.GetFileName(_primaryPath);
         if (_taskType == TaskType.Extract)
         {
-            Title = $"Extracting {fileName} — Firezip";
-            TitleTextBlock.Text = $"Extracting {fileName}";
+            Title = $"Extraindo {fileName} — Firezip";
+            TitleTextBlock.Text = $"Extraindo {fileName}";
             OperationIcon.Glyph = "\uE8B7"; // Folder/Open
+            if (File.Exists(_primaryPath))
+            {
+                try { _sourceArchiveLength = new FileInfo(_primaryPath).Length; } catch { }
+            }
         }
         else
         {
-            Title = $"Compressing {fileName} — Firezip";
-            TitleTextBlock.Text = $"Compressing to {fileName}";
+            Title = $"Compactando {fileName} — Firezip";
+            TitleTextBlock.Text = $"Compactando para {fileName}";
             OperationIcon.Glyph = "\uE8B9"; // Save/Archive
         }
 
@@ -99,8 +105,8 @@ public sealed partial class TaskProgressWindow : Window, IDisposable
         }
         catch { }
 
-        const int width = 500;
-        const int height = 240;
+        const int width = 560;
+        const int height = 440;
         AppWindow.Resize(new SizeInt32(width, height));
 
         if (AppWindow.Presenter is OverlappedPresenter presenter)
@@ -145,7 +151,6 @@ public sealed partial class TaskProgressWindow : Window, IDisposable
 
         try
         {
-            // First open archive to check for password if needed
             string? password = null;
             while (!_cts.IsCancellationRequested)
             {
@@ -170,17 +175,43 @@ public sealed partial class TaskProgressWindow : Window, IDisposable
                 }
                 catch (Exception ex)
                 {
-                    FinishWithError($"Could not open archive: {ex.Message}");
+                    FinishWithError($"Não foi possível abrir o arquivo: {ex.Message}");
                     return;
                 }
             }
 
+            var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+
             var progress = new Progress<OperationProgress>(p =>
             {
+                // Item Progress Bar
+                ItemProgressBar.Value = p.ItemPercentage;
+                ItemPercentageTextBlock.Text = $"{p.ItemPercentage:0}%";
+                CurrentItemTextBlock.Text = string.IsNullOrWhiteSpace(p.CurrentItemName) ? "Extraindo..." : p.CurrentItemName;
+
+                // Total Progress Bar
                 TaskProgressBar.Value = p.Percentage;
-                CurrentItemTextBlock.Text = string.IsNullOrWhiteSpace(p.CurrentItemName) ? "Extracting..." : p.CurrentItemName;
-                ProcessedCountTextBlock.Text = $"{p.FilesProcessed} of {p.TotalFiles} file(s)";
-                SpeedAndEtaTextBlock.Text = $"{p.FormattedSpeed} • ETA: {p.FormattedRemainingTime}";
+                TotalPercentageTextBlock.Text = $"{p.Percentage:0}%";
+                ProcessedCountTextBlock.Text = $"{p.FilesProcessed} de {p.TotalFiles} itens ({ArchiveEntry.FormatBytes(p.BytesProcessed)} de {ArchiveEntry.FormatBytes(p.TotalBytes)})";
+
+                // Speed and ETA
+                SpeedTextBlock.Text = $"Velocidade: {p.FormattedSpeed}";
+                EtaTextBlock.Text = $"Tempo restante: {p.FormattedRemainingTime}";
+
+                // Compression Details Expander
+                ElapsedTextBlock.Text = stopwatch.Elapsed.ToString(@"mm\:ss", CultureInfo.InvariantCulture);
+                if (p.TotalBytes > 0 && _sourceArchiveLength > 0)
+                {
+                    var ratio = Math.Clamp((double)_sourceArchiveLength / p.TotalBytes * 100.0, 0.0, 100.0);
+                    var savings = Math.Max(0, 100.0 - ratio);
+                    RatioTextBlock.Text = $"{ratio:F1}%";
+                    SavingsTextBlock.Text = $"{savings:F1}% de espaço economizado";
+                    SizesTextBlock.Text = $"Original: {ArchiveEntry.FormatBytes(p.TotalBytes)} | Compactado: {ArchiveEntry.FormatBytes(_sourceArchiveLength)}";
+                }
+                else
+                {
+                    SizesTextBlock.Text = $"Processado: {ArchiveEntry.FormatBytes(p.BytesProcessed)}";
+                }
             });
 
             var request = new ExtractionRequest
@@ -197,8 +228,8 @@ public sealed partial class TaskProgressWindow : Window, IDisposable
             if (result.Success)
             {
                 await FinishWithSuccess(
-                    title: "Extraction complete",
-                    message: $"Extracted {result.FilesProcessed} file(s) to {destinationDir}",
+                    title: "Extração concluída",
+                    message: $"Extraídos {result.FilesProcessed} arquivo(s) para {destinationDir}",
                     openFolderTarget: destinationDir);
             }
             else if (result.IsCancelled)
@@ -207,7 +238,7 @@ public sealed partial class TaskProgressWindow : Window, IDisposable
             }
             else
             {
-                FinishWithError(result.ErrorMessage ?? "Extraction failed.");
+                FinishWithError(result.ErrorMessage ?? "A extração falhou.");
             }
         }
         catch (OperationCanceledException)
@@ -216,7 +247,7 @@ public sealed partial class TaskProgressWindow : Window, IDisposable
         }
         catch (Exception ex)
         {
-            FinishWithError($"Unexpected error: {ex.Message}");
+            FinishWithError($"Erro inesperado: {ex.Message}");
         }
     }
 
@@ -227,12 +258,23 @@ public sealed partial class TaskProgressWindow : Window, IDisposable
 
         try
         {
+            var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+
             var progress = new Progress<OperationProgress>(p =>
             {
+                ItemProgressBar.Value = p.ItemPercentage;
+                ItemPercentageTextBlock.Text = $"{p.ItemPercentage:0}%";
+                CurrentItemTextBlock.Text = string.IsNullOrWhiteSpace(p.CurrentItemName) ? "Compactando..." : p.CurrentItemName;
+
                 TaskProgressBar.Value = p.Percentage;
-                CurrentItemTextBlock.Text = string.IsNullOrWhiteSpace(p.CurrentItemName) ? "Compressing..." : p.CurrentItemName;
-                ProcessedCountTextBlock.Text = $"{p.FilesProcessed} of {p.TotalFiles} file(s)";
-                SpeedAndEtaTextBlock.Text = $"{p.FormattedSpeed} • ETA: {p.FormattedRemainingTime}";
+                TotalPercentageTextBlock.Text = $"{p.Percentage:0}%";
+                ProcessedCountTextBlock.Text = $"{p.FilesProcessed} de {p.TotalFiles} itens ({ArchiveEntry.FormatBytes(p.BytesProcessed)} de {ArchiveEntry.FormatBytes(p.TotalBytes)})";
+
+                SpeedTextBlock.Text = $"Velocidade: {p.FormattedSpeed}";
+                EtaTextBlock.Text = $"Tempo restante: {p.FormattedRemainingTime}";
+
+                ElapsedTextBlock.Text = stopwatch.Elapsed.ToString(@"mm\:ss", CultureInfo.InvariantCulture);
+                SizesTextBlock.Text = $"Processados: {ArchiveEntry.FormatBytes(p.BytesProcessed)}";
             });
 
             var request = new CompressionRequest
@@ -248,8 +290,8 @@ public sealed partial class TaskProgressWindow : Window, IDisposable
             if (result.Success)
             {
                 await FinishWithSuccess(
-                    title: "Compression complete",
-                    message: $"Created {Path.GetFileName(outputArchive)}",
+                    title: "Compactação concluída",
+                    message: $"Arquivo {Path.GetFileName(outputArchive)} criado com sucesso.",
                     openFolderTarget: Path.GetDirectoryName(outputArchive));
             }
             else if (result.IsCancelled)
@@ -258,7 +300,7 @@ public sealed partial class TaskProgressWindow : Window, IDisposable
             }
             else
             {
-                FinishWithError(result.ErrorMessage ?? "Compression failed.");
+                FinishWithError(result.ErrorMessage ?? "A compactação falhou.");
             }
         }
         catch (OperationCanceledException)
@@ -267,36 +309,64 @@ public sealed partial class TaskProgressWindow : Window, IDisposable
         }
         catch (Exception ex)
         {
-            FinishWithError($"Unexpected error: {ex.Message}");
+            FinishWithError($"Erro inesperado: {ex.Message}");
         }
     }
 
     private async Task FinishWithSuccess(string title, string message, string? openFolderTarget)
     {
         _isCompleted = true;
+        ItemProgressBar.Value = 100;
         TaskProgressBar.Value = 100;
-        CurrentItemTextBlock.Text = "Complete";
+        ItemPercentageTextBlock.Text = "100%";
+        TotalPercentageTextBlock.Text = "100%";
+        CurrentItemTextBlock.Text = "Concluído com sucesso";
 
         if (_settings.NotifyOnTaskCompletion)
         {
             _notificationService.TryShow(title, message);
         }
 
-        if (_openFolderAfter && !string.IsNullOrEmpty(openFolderTarget))
+        // Automatic archive deletion if configured globally
+        if (_taskType == TaskType.Extract && _settings.DeleteArchiveAfterExtraction && File.Exists(_primaryPath))
+        {
+            try
+            {
+                File.Delete(_primaryPath);
+                _logger.Info($"Deleted source archive after successful extraction: {_primaryPath}");
+            }
+            catch (Exception ex)
+            {
+                _logger.Warn($"Could not auto-delete source archive: {ex.Message}");
+            }
+        }
+
+        // Open folder if ticker checked
+        var shouldOpenFolder = OpenFolderCheckBox.IsChecked == true;
+        if (shouldOpenFolder && !string.IsNullOrEmpty(openFolderTarget))
         {
             ShellOperations.OpenFolderAndSelect(openFolderTarget);
         }
 
-        if (_settings.AutoCloseTaskProgressWindow)
+        var shouldKeepOpen = KeepWindowOpenCheckBox.IsChecked == true;
+        if (shouldKeepOpen)
         {
-            await Task.Delay(350);
-            Close();
+            CancelCloseButton.Content = "Fechar";
+            if (!string.IsNullOrEmpty(openFolderTarget))
+            {
+                OpenFolderButton.Visibility = Visibility.Visible;
+            }
+
+            // Exibir opção de excluir arquivo de origem se ainda existir
+            if (_taskType == TaskType.Extract && File.Exists(_primaryPath))
+            {
+                DeleteSourceArchiveButton.Visibility = Visibility.Visible;
+            }
         }
         else
         {
-            CancelCloseButton.Content = "Close";
-            if (!string.IsNullOrEmpty(openFolderTarget))
-                OpenFolderButton.Visibility = Visibility.Visible;
+            await Task.Delay(400);
+            Close();
         }
     }
 
@@ -305,29 +375,53 @@ public sealed partial class TaskProgressWindow : Window, IDisposable
         _isCompleted = true;
         _logger.Error(errorMessage);
         TaskProgressBar.Visibility = Visibility.Collapsed;
+        ItemProgressBar.Visibility = Visibility.Collapsed;
         CurrentItemTextBlock.Visibility = Visibility.Collapsed;
-        SpeedAndEtaTextBlock.Visibility = Visibility.Collapsed;
+        SpeedTextBlock.Visibility = Visibility.Collapsed;
+        EtaTextBlock.Visibility = Visibility.Collapsed;
         ProcessedCountTextBlock.Visibility = Visibility.Collapsed;
 
         StatusMessageTextBlock.Text = errorMessage;
         StatusMessageTextBlock.Foreground = (Microsoft.UI.Xaml.Media.Brush)Application.Current.Resources["SystemFillColorCriticalBrush"];
         StatusMessageTextBlock.Visibility = Visibility.Visible;
 
-        CancelCloseButton.Content = "Close";
+        CancelCloseButton.Content = "Fechar";
     }
 
     private void FinishWithCancellation()
     {
         _isCompleted = true;
         TaskProgressBar.Visibility = Visibility.Collapsed;
-        CurrentItemTextBlock.Text = "Cancelled";
-        SpeedAndEtaTextBlock.Visibility = Visibility.Collapsed;
+        ItemProgressBar.Visibility = Visibility.Collapsed;
+        CurrentItemTextBlock.Text = "Operação cancelada";
+        SpeedTextBlock.Visibility = Visibility.Collapsed;
+        EtaTextBlock.Visibility = Visibility.Collapsed;
         ProcessedCountTextBlock.Visibility = Visibility.Collapsed;
 
-        StatusMessageTextBlock.Text = "Operation was cancelled.";
+        StatusMessageTextBlock.Text = "A operação foi cancelada pelo usuário.";
         StatusMessageTextBlock.Visibility = Visibility.Visible;
 
-        CancelCloseButton.Content = "Close";
+        CancelCloseButton.Content = "Fechar";
+    }
+
+    private void OnDeleteSourceArchiveClick(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            if (File.Exists(_primaryPath))
+            {
+                File.Delete(_primaryPath);
+                DeleteSourceArchiveButton.IsEnabled = false;
+                StatusMessageTextBlock.Text = "Arquivo de origem (.zip) excluído com sucesso.";
+                StatusMessageTextBlock.Foreground = (Microsoft.UI.Xaml.Media.Brush)Application.Current.Resources["AccentTextFillColorPrimaryBrush"];
+                StatusMessageTextBlock.Visibility = Visibility.Visible;
+            }
+        }
+        catch (Exception ex)
+        {
+            StatusMessageTextBlock.Text = $"Não foi possível excluir o arquivo: {ex.Message}";
+            StatusMessageTextBlock.Visibility = Visibility.Visible;
+        }
     }
 
     private async Task<string?> PromptPasswordAsync()
@@ -354,7 +448,7 @@ public sealed partial class TaskProgressWindow : Window, IDisposable
         {
             _cts.Cancel();
             CancelCloseButton.IsEnabled = false;
-            CurrentItemTextBlock.Text = "Cancelling...";
+            CurrentItemTextBlock.Text = "Cancelando...";
         }
     }
 

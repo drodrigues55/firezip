@@ -72,22 +72,23 @@
 
         <!-- 2. Action Command Bar (Toolbar) -->
         <CommandBar Grid.Row="1" DefaultLabelPosition="Right" HorizontalAlignment="Left" Background="Transparent">
-            <AppBarButton Icon="OpenFile" Label="Open" ToolTipService.ToolTip="Open Archive (Ctrl+O)" Click="OnOpenArchiveClick" />
-            <AppBarButton Icon="Download" Label="Extract" ToolTipService.ToolTip="Extract files from archive"
+            <AppBarButton x:Name="OpenAppBarButton" Icon="OpenFile" Label="Open" ToolTipService.ToolTip="Open Archive (Ctrl+O)" Click="OnOpenArchiveClick" />
+            <AppBarButton x:Name="ExtractAppBarButton" Icon="Download" Label="Extract" ToolTipService.ToolTip="Extract files from archive"
                           IsEnabled="{x:Bind ViewModel.HasArchive, Mode=OneWay}" Click="OnExtractAllClick" />
-            <AppBarButton Icon="NewWindow" Label="New Archive" ToolTipService.ToolTip="Create new archive (Ctrl+N)" Click="OnNewArchiveClick" />
+            <AppBarButton x:Name="NewAppBarButton" Icon="NewWindow" Label="New Archive" ToolTipService.ToolTip="Create new archive (Ctrl+N)" Click="OnNewArchiveClick" />
             <AppBarSeparator />
-            <AppBarButton Icon="Add" Label="Add" ToolTipService.ToolTip="Add files to current archive"
+            <AppBarButton x:Name="AddAppBarButton" Icon="Add" Label="Add" ToolTipService.ToolTip="Add files to current archive"
                           IsEnabled="{x:Bind ViewModel.HasArchive, Mode=OneWay}" Click="OnAddFilesClick" />
-            <AppBarButton Icon="Delete" Label="Delete" ToolTipService.ToolTip="Delete selected items (Delete)"
+            <AppBarButton x:Name="DeleteAppBarButton" Icon="Delete" Label="Delete" ToolTipService.ToolTip="Delete selected items (Delete)"
                           IsEnabled="{x:Bind ViewModel.HasArchive, Mode=OneWay}" Click="OnDeleteClick" />
             <AppBarSeparator />
-            <AppBarButton Icon="Accept" Label="Test" ToolTipService.ToolTip="Test archive integrity"
+            <AppBarButton x:Name="TestAppBarButton" Icon="Accept" Label="Test" ToolTipService.ToolTip="Test archive integrity"
                           IsEnabled="{x:Bind ViewModel.HasArchive, Mode=OneWay}" Click="OnTestArchiveClick" />
-            <AppBarButton Icon="Refresh" Label="Refresh" ToolTipService.ToolTip="Refresh view (F5)"
+            <AppBarButton x:Name="RefreshAppBarButton" Icon="Refresh" Label="Refresh" ToolTipService.ToolTip="Refresh view (F5)"
                           IsEnabled="{x:Bind ViewModel.HasArchive, Mode=OneWay}" Click="OnRefreshClick" />
             <AppBarSeparator />
-            <AppBarButton Icon="Setting" Label="Settings" ToolTipService.ToolTip="Configure Firezip &amp; Windows Explorer integration" Click="OnSettingsClick" />
+            <AppBarButton x:Name="SettingsAppBarButton" Icon="Setting" Label="Settings" ToolTipService.ToolTip="Configure Firezip &amp; Windows Explorer integration" Click="OnSettingsClick" />
+            <AppBarButton x:Name="AboutAppBarButton" Icon="Help" Label="About" ToolTipService.ToolTip="About Firezip" Click="OnAboutClick" />
         </CommandBar>
 
         <!-- 3. Address and Search Bar -->

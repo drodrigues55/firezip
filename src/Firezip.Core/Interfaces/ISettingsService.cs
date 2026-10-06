@@ -6,6 +6,9 @@ public interface ISettingsService
 {
     string DefaultExtractionFolder { get; set; }
     bool OpenExtractedFolderAfterExtraction { get; set; }
+    bool KeepTaskProgressWindowOpen { get; set; }
+    bool DeleteArchiveAfterExtraction { get; set; }
+    string DoubleClickAction { get; set; } // "OpenInFirezip", "ExtractToArchiveFolder", "ExtractToPredefinedFolder", "PromptDestinationFolder", "ExtractHere"
     bool ConfirmBeforeOverwriting { get; set; }
     bool ConfirmBeforeDeleting { get; set; }
     ArchiveFormat DefaultArchiveFormat { get; set; }

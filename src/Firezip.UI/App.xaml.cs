@@ -54,9 +54,9 @@ public partial class App : Application
         notificationService.Initialize();
 
         // Load settings before determining operational defaults
+        var settings = Services.GetRequiredService<ISettingsService>();
         try
         {
-            var settings = Services.GetRequiredService<ISettingsService>();
             await settings.LoadAsync();
 
             var loc = Services.GetRequiredService<ILocalizationService>();
@@ -85,7 +85,7 @@ public partial class App : Application
                     archive,
                     targetDir,
                     ConflictPolicy.Overwrite,
-                    openFolderAfter: false);
+                    openFolderAfter: settings.OpenExtractedFolderAfterExtraction);
                 progressWin.Activate();
                 return;
             }
@@ -100,7 +100,7 @@ public partial class App : Application
                     archive,
                     targetDir,
                     ConflictPolicy.Overwrite,
-                    openFolderAfter: true);
+                    openFolderAfter: settings.OpenExtractedFolderAfterExtraction);
                 progressWin.Activate();
                 return;
             }
@@ -145,6 +145,73 @@ public partial class App : Application
                     sourcePaths: [target]);
                 progressWin.Activate();
                 return;
+            }
+
+            // Direct archive double-click action handling (Bandizip-style)
+            if (File.Exists(cmdArgs[1]))
+            {
+                var filePath = cmdArgs[1];
+                var ext = Path.GetExtension(filePath);
+                string[] supportedArchiveExts =
+                [
+                    ".zip", ".zipx", ".jar", ".apk", ".7z", ".rar",
+                    ".tar", ".gz", ".tgz", ".bz2", ".tbz2", ".xz", ".txz", ".iso", ".cab"
+                ];
+
+                if (supportedArchiveExts.Contains(ext, StringComparer.OrdinalIgnoreCase))
+                {
+                    var action = settings.DoubleClickAction;
+                    if (string.Equals(action, "ExtractToArchiveFolder", StringComparison.OrdinalIgnoreCase))
+                    {
+                        var folderName = Path.GetFileNameWithoutExtension(filePath);
+                        var targetDir = Path.Combine(Path.GetDirectoryName(filePath) ?? Environment.CurrentDirectory, folderName);
+                        var progressWin = new TaskProgressWindow(
+                            TaskProgressWindow.TaskType.Extract,
+                            filePath,
+                            targetDir,
+                            ConflictPolicy.Overwrite,
+                            openFolderAfter: settings.OpenExtractedFolderAfterExtraction);
+                        progressWin.Activate();
+                        return;
+                    }
+
+                    if (string.Equals(action, "ExtractHere", StringComparison.OrdinalIgnoreCase))
+                    {
+                        var targetDir = Path.GetDirectoryName(filePath) ?? Environment.CurrentDirectory;
+                        var progressWin = new TaskProgressWindow(
+                            TaskProgressWindow.TaskType.Extract,
+                            filePath,
+                            targetDir,
+                            ConflictPolicy.Overwrite,
+                            openFolderAfter: settings.OpenExtractedFolderAfterExtraction);
+                        progressWin.Activate();
+                        return;
+                    }
+
+                    if (string.Equals(action, "ExtractToPredefinedFolder", StringComparison.OrdinalIgnoreCase))
+                    {
+                        var baseDir = !string.IsNullOrWhiteSpace(settings.DefaultExtractionFolder) && Directory.Exists(settings.DefaultExtractionFolder)
+                            ? settings.DefaultExtractionFolder
+                            : Path.GetDirectoryName(filePath) ?? Environment.CurrentDirectory;
+                        var folderName = Path.GetFileNameWithoutExtension(filePath);
+                        var targetDir = Path.Combine(baseDir, folderName);
+                        var progressWin = new TaskProgressWindow(
+                            TaskProgressWindow.TaskType.Extract,
+                            filePath,
+                            targetDir,
+                            ConflictPolicy.Overwrite,
+                            openFolderAfter: settings.OpenExtractedFolderAfterExtraction);
+                        progressWin.Activate();
+                        return;
+                    }
+
+                    if (string.Equals(action, "PromptDestinationFolder", StringComparison.OrdinalIgnoreCase))
+                    {
+                        var optionsWin = new TaskOptionsWindow(filePath);
+                        optionsWin.Activate();
+                        return;
+                    }
+                }
             }
         }
 

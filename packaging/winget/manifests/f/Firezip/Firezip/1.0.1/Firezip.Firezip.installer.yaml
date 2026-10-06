@@ -1,7 +1,7 @@
 # yaml-language-server: $schema=https://aka.ms/winget-manifest.installer.1.9.0.schema.json
 
 PackageIdentifier: Firezip.Firezip
-PackageVersion: 1.0.0
+PackageVersion: 1.0.1
 InstallerType: inno
 Scope: machine
 InstallModes:
@@ -22,7 +22,7 @@ FileExtensions:
 ProductCode: '{8B036367-AE8C-4D88-B1F3-E18F2E23A534}_is1'
 Installers:
   - Architecture: x64
-    InstallerUrl: https://github.com/drodrigues55/firezip/releases/download/v1.0.0/FirezipSetup-x64-v1.0.0.exe
-    InstallerSha256: C0EA4372C835D3B3AD3773306B5997084A7AED50A947234F04256C9132B8C17B
+    InstallerUrl: https://github.com/drodrigues55/firezip/releases/download/v1.0.1/FirezipSetup-x64-v1.0.1.exe
+    InstallerSha256: 5CCA810923B35D3763777041F123E0D7C0D3CC69BD3BBDA507268F4223FD93E6
 ManifestType: installer
 ManifestVersion: 1.9.0

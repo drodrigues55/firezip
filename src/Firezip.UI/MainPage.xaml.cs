@@ -1,3 +1,4 @@
+using Firezip.Core.Interfaces;
 using Firezip.Core.Models;
 using Firezip.UI.ViewModels;
 using Firezip.UI.Views;
@@ -34,9 +35,34 @@ public sealed partial class MainPage : Page
         ViewModel.ShowErrorCallback = ShowErrorAsync;
         ViewModel.ConfirmActionCallback = PromptDeleteConfirmationAsync;
         RegisterKeyboardAccelerators();
+
+        ApplyLocalization();
+        var loc = App.Services.GetService<ILocalizationService>();
+        if (loc != null)
+        {
+            loc.CultureChanged += (s, e) => DispatcherQueue?.TryEnqueue(ApplyLocalization);
+        }
     }
 
+    private void ApplyLocalization()
+    {
+        var loc = App.Services.GetService<ILocalizationService>();
+        if (loc == null) return;
+
+        OpenAppBarButton.Label = loc.GetString("Action_Open");
+        ExtractAppBarButton.Label = loc.GetString("Action_Extract");
+        NewAppBarButton.Label = loc.GetString("Action_New");
+        DeleteAppBarButton.Label = loc.GetString("Action_Delete");
+        TestAppBarButton.Label = loc.GetString("Action_Test");
+        RefreshAppBarButton.Label = loc.GetString("Action_Refresh");
+        SettingsAppBarButton.Label = loc.GetString("Action_Settings");
+        AboutAppBarButton.Label = loc.GetString("Action_About");
+    }
+
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Performance", "CA1822:Mark members as static", Justification = "Required as instance methods for WinUI 3 x:Bind generator")]
     public Visibility BooleanToVisibility(bool value) => value ? Visibility.Visible : Visibility.Collapsed;
+
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Performance", "CA1822:Mark members as static", Justification = "Required as instance methods for WinUI 3 x:Bind generator")]
     public Visibility InverseBooleanToVisibility(bool value) => value ? Visibility.Collapsed : Visibility.Visible;
 
     private async Task<string?> PromptPasswordAsync()
@@ -312,22 +338,7 @@ public sealed partial class MainPage : Page
 
     private async void OnAboutClick(object sender, RoutedEventArgs e)
     {
-        var aboutDialog = new ContentDialog
-        {
-            XamlRoot = this.XamlRoot,
-            Title = "About Firezip",
-            Content = new StackPanel
-            {
-                Spacing = 10,
-                Children =
-                {
-                    new TextBlock { Text = "Firezip 1.0 (x64 Native)", FontWeight = Microsoft.UI.Text.FontWeights.SemiBold, FontSize = 16 },
-                    new TextBlock { Text = "A 100% free, fast, and secure Windows archive manager built with .NET 10 and WinUI 3.", TextWrapping = TextWrapping.Wrap },
-                    new TextBlock { Text = "Features: No ads, no telemetry, no subscriptions, fully offline, streaming engine with Zip Slip protection.", TextWrapping = TextWrapping.Wrap, Foreground = (Microsoft.UI.Xaml.Media.Brush)Application.Current.Resources["TextFillColorSecondaryBrush"] }
-                }
-            },
-            CloseButtonText = "OK"
-        };
+        var aboutDialog = new Views.AboutDialog { XamlRoot = this.XamlRoot };
         await aboutDialog.ShowAsync();
     }
 

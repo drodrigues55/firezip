@@ -88,4 +88,53 @@ public class SettingsTests
                 File.Delete(tempFile);
         }
     }
+
+    [Fact]
+    public async Task SettingsService_SavesAndLoads_DoubleClickActionAndExtractionOptions()
+    {
+        var tempFile = Path.Combine(Path.GetTempPath(), "firezip_test_bandizip_" + Guid.NewGuid().ToString("N") + ".json");
+        try
+        {
+            var service = new SettingsService(tempFile)
+            {
+                DoubleClickAction = "ExtractToArchiveFolder",
+                DefaultExtractionFolder = @"C:\Extracted",
+                OpenExtractedFolderAfterExtraction = true,
+                KeepTaskProgressWindowOpen = true,
+                DeleteArchiveAfterExtraction = true
+            };
+            await service.SaveAsync();
+
+            var reloadedService = new SettingsService(tempFile);
+            await reloadedService.LoadAsync();
+
+            Assert.Equal("ExtractToArchiveFolder", reloadedService.DoubleClickAction);
+            Assert.Equal(@"C:\Extracted", reloadedService.DefaultExtractionFolder);
+            Assert.True(reloadedService.OpenExtractedFolderAfterExtraction);
+            Assert.True(reloadedService.KeepTaskProgressWindowOpen);
+            Assert.True(reloadedService.DeleteArchiveAfterExtraction);
+        }
+        finally
+        {
+            if (File.Exists(tempFile))
+                File.Delete(tempFile);
+        }
+    }
+
+    [Fact]
+    public void OperationProgress_ItemPercentageAndCompressionRatio_CalculatesAccurately()
+    {
+        var progress = new OperationProgress
+        {
+            BytesProcessed = 500,
+            TotalBytes = 1000,
+            ItemBytesProcessed = 25,
+            ItemTotalBytes = 100,
+            CompressedBytes = 400
+        };
+
+        Assert.Equal(50.0, progress.Percentage);
+        Assert.Equal(25.0, progress.ItemPercentage);
+        Assert.Equal(40.0, progress.CompressionRatio);
+    }
 }

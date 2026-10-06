@@ -24,69 +24,176 @@
             </TitleBar.IconSource>
         </TitleBar>
 
-        <Grid Grid.Row="1" Padding="24,12,24,20" RowSpacing="12">
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="*" />
-                <RowDefinition Height="Auto" />
-            </Grid.RowDefinitions>
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+            <Grid Padding="24,12,24,20" RowSpacing="10">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
 
-            <!-- Operation Title & Icon -->
-            <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
-                <FontIcon x:Name="OperationIcon" Glyph="&#xE8B7;" FontSize="18"
-                          Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}" />
-                <TextBlock x:Name="TitleTextBlock" Text="Processing..."
-                           FontSize="15" FontWeight="SemiBold"
-                           TextTrimming="CharacterEllipsis" />
-            </StackPanel>
+                <!-- 1. Operation Header & Icon -->
+                <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
+                    <FontIcon x:Name="OperationIcon" Glyph="&#xE8B7;" FontSize="18"
+                              Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}" />
+                    <TextBlock x:Name="TitleTextBlock" Text="Processing..."
+                               FontSize="15" FontWeight="SemiBold"
+                               TextTrimming="CharacterEllipsis" />
+                </StackPanel>
 
-            <!-- Current File / Subtext -->
-            <TextBlock x:Name="CurrentItemTextBlock" Grid.Row="1"
-                       Text="Preparing..."
-                       FontSize="12"
-                       Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                       TextTrimming="CharacterEllipsis" />
+                <!-- 2. Current Item Progress Bar (Barra por item) -->
+                <StackPanel Grid.Row="1" Spacing="4">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock x:Name="CurrentItemTextBlock"
+                                   Text="Preparing..."
+                                   FontSize="12"
+                                   Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                   TextTrimming="CharacterEllipsis" />
+                        <TextBlock x:Name="ItemPercentageTextBlock"
+                                   Grid.Column="1"
+                                   Text="0%"
+                                   FontSize="12"
+                                   Foreground="{ThemeResource TextFillColorTertiaryBrush}" />
+                    </Grid>
+                    <ProgressBar x:Name="ItemProgressBar"
+                                 Minimum="0" Maximum="100" Value="0"
+                                 IsIndeterminate="False"
+                                 Height="4"
+                                 HorizontalAlignment="Stretch" />
+                </StackPanel>
 
-            <!-- Progress Bar -->
-            <ProgressBar x:Name="TaskProgressBar" Grid.Row="2"
-                         Minimum="0" Maximum="100" Value="0"
-                         IsIndeterminate="False"
-                         Height="6"
-                         HorizontalAlignment="Stretch" />
+                <!-- 3. Overall Total Progress Bar (Barra do arquivo em si) -->
+                <StackPanel Grid.Row="2" Spacing="4">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock x:Name="ProcessedCountTextBlock"
+                                   Text="0 de 0 itens"
+                                   FontSize="12"
+                                   Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                        <TextBlock x:Name="TotalPercentageTextBlock"
+                                   Grid.Column="1"
+                                   Text="0%"
+                                   FontSize="12"
+                                   FontWeight="SemiBold"
+                                   Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}" />
+                    </Grid>
+                    <ProgressBar x:Name="TaskProgressBar"
+                                 Minimum="0" Maximum="100" Value="0"
+                                 IsIndeterminate="False"
+                                 Height="8"
+                                 HorizontalAlignment="Stretch" />
+                </StackPanel>
 
-            <!-- Stats: Count, Speed, ETA -->
-            <Grid Grid.Row="3">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="Auto" />
-                </Grid.ColumnDefinitions>
-                <TextBlock x:Name="ProcessedCountTextBlock"
+                <!-- 4. Real-time Summary (Speed & ETA) -->
+                <Grid Grid.Row="3">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock x:Name="SpeedTextBlock"
+                               Text="Velocidade: Calculando..."
+                               FontSize="12"
+                               Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                    <TextBlock x:Name="EtaTextBlock"
+                               Grid.Column="1"
+                               Text="Tempo restante: Calculando..."
+                               FontSize="12"
+                               Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                </Grid>
+
+                <!-- 5. Options Tickers (Abrir pasta / Manter janela aberta) -->
+                <StackPanel Grid.Row="4" Orientation="Horizontal" Spacing="16" Margin="0,2,0,2">
+                    <CheckBox x:Name="OpenFolderCheckBox"
+                              Content="Abrir pasta após extrair"
+                              FontSize="12" />
+                    <CheckBox x:Name="KeepWindowOpenCheckBox"
+                              Content="Manter janela aberta após concluir"
+                              FontSize="12" />
+                </StackPanel>
+
+                <!-- 6. Dropdown / Expander com Detalhes da Taxa de Compressão -->
+                <Expander x:Name="DetailsExpander" Grid.Row="5"
+                          Header="Detalhes da Compressão / Estatísticas"
+                          HorizontalAlignment="Stretch"
+                          IsExpanded="False">
+                    <Grid Padding="8" RowSpacing="6" ColumnSpacing="12">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+
+                        <TextBlock Text="Taxa de Compressão:" FontWeight="SemiBold" FontSize="12" />
+                        <TextBlock x:Name="RatioTextBlock" Grid.Column="1" Text="Calculando..." FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+
+                        <TextBlock Grid.Row="1" Text="Tamanhos (Original / Compactado):" FontWeight="SemiBold" FontSize="12" />
+                        <TextBlock x:Name="SizesTextBlock" Grid.Row="1" Grid.Column="1" Text="0 MB / 0 MB" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+
+                        <TextBlock Grid.Row="2" Text="Tempo Decorrido:" FontWeight="SemiBold" FontSize="12" />
+                        <TextBlock x:Name="ElapsedTextBlock" Grid.Row="2" Grid.Column="1" Text="00:00" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+
+                        <TextBlock Grid.Row="3" Text="Espaço Economizado:" FontWeight="SemiBold" FontSize="12" />
+                        <TextBlock x:Name="SavingsTextBlock" Grid.Row="3" Grid.Column="1" Text="0%" FontSize="12" Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}" />
+                    </Grid>
+                </Expander>
+
+                <!-- 7. Status / Error Message -->
+                <TextBlock x:Name="StatusMessageTextBlock" Grid.Row="6"
+                           TextWrapping="Wrap"
                            FontSize="12"
-                           Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
-                <TextBlock x:Name="SpeedAndEtaTextBlock"
-                           Grid.Column="1"
-                           FontSize="12"
-                           Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                           Visibility="Collapsed"
+                           VerticalAlignment="Center" />
+
+                <!-- 8. Action Buttons Footer -->
+                <Grid Grid.Row="7" Margin="0,4,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Left: Eliminar arquivo de origem (.zip) -->
+                    <Button x:Name="DeleteSourceArchiveButton"
+                            Content="Excluir arquivo de origem (.zip)"
+                            Visibility="Collapsed"
+                            Click="OnDeleteSourceArchiveClick">
+                        <Button.ContentTemplate>
+                            <DataTemplate>
+                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                    <FontIcon Glyph="&#xE74D;" FontSize="14" Foreground="{ThemeResource SystemFillColorCriticalBrush}" />
+                                    <TextBlock Text="Excluir arquivo de origem (.zip)" VerticalAlignment="Center" />
+                                </StackPanel>
+                            </DataTemplate>
+                        </Button.ContentTemplate>
+                    </Button>
+
+                    <!-- Right: Abrir pasta e Cancelar / Fechar -->
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
+                        <Button x:Name="OpenFolderButton" Content="Abrir Pasta"
+                                Visibility="Collapsed"
+                                Style="{ThemeResource AccentButtonStyle}"
+                                Click="OnOpenFolderClick" />
+                        <Button x:Name="CancelCloseButton" Content="Cancelar"
+                                Click="OnCancelCloseClick" />
+                    </StackPanel>
+                </Grid>
             </Grid>
-
-            <!-- Status / Error Notification -->
-            <TextBlock x:Name="StatusMessageTextBlock" Grid.Row="4"
-                       TextWrapping="Wrap"
-                       FontSize="12"
-                       Visibility="Collapsed"
-                       VerticalAlignment="Center" />
-
-            <!-- Action Buttons Footer -->
-            <StackPanel Grid.Row="5" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
-                <Button x:Name="OpenFolderButton" Content="Open Folder"
-                        Visibility="Collapsed"
-                        Click="OnOpenFolderClick" />
-                <Button x:Name="CancelCloseButton" Content="Cancel"
-                        Click="OnCancelCloseClick" />
-            </StackPanel>
-        </Grid>
+        </ScrollViewer>
     </Grid>
 </Window>

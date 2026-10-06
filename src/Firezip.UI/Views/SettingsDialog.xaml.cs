@@ -4,6 +4,7 @@ using Firezip.UI.ViewModels;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Windows.Storage.Pickers;
 
 namespace Firezip.UI.Views;
 
@@ -17,10 +18,8 @@ public sealed partial class SettingsDialog : ContentDialog
         _viewModel = App.Services.GetRequiredService<SettingsViewModel>();
 
         // Populate controls from ViewModel
-        OpenFolderCheckBox.IsChecked = _viewModel.OpenFolderAfterExtraction;
         ConfirmOverwriteCheckBox.IsChecked = _viewModel.ConfirmBeforeOverwriting;
         ConfirmDeleteCheckBox.IsChecked = _viewModel.ConfirmBeforeDeleting;
-        AutoCloseProgressCheckBox.IsChecked = _viewModel.AutoCloseTaskProgressWindow;
         NotifyCompletionCheckBox.IsChecked = _viewModel.NotifyOnTaskCompletion;
         ContextMenuCheckBox.IsChecked = _viewModel.EnableContextMenu;
         CascadingMenuCheckBox.IsChecked = _viewModel.UseCascadingContextMenu;
@@ -64,6 +63,19 @@ public sealed partial class SettingsDialog : ContentDialog
             _ => 0
         };
 
+        DoubleClickActionBox.SelectedIndex = _viewModel.DoubleClickAction switch
+        {
+            "ExtractToArchiveFolder" => 1,
+            "ExtractToPredefinedFolder" => 2,
+            "PromptDestinationFolder" => 3,
+            "ExtractHere" => 4,
+            _ => 0
+        };
+        DefaultExtractionFolderBox.Text = _viewModel.DefaultExtractionFolder ?? string.Empty;
+        OpenFolderCheckBox.IsChecked = _viewModel.OpenFolderAfterExtraction;
+        KeepProgressWindowCheckBox.IsChecked = _viewModel.KeepTaskProgressWindowOpen;
+        DeleteSourceArchiveCheckBox.IsChecked = _viewModel.DeleteArchiveAfterExtraction;
+
         CurrentVersionTextBlock.Text = $"Versão atual: v{_viewModel.CurrentVersion}";
         LastCheckTextBlock.Text = $"Última verificação: {_viewModel.LastCheckDisplay}";
 
@@ -75,10 +87,20 @@ public sealed partial class SettingsDialog : ContentDialog
                 2 => "pt-BR",
                 _ => "System"
             };
+            _viewModel.DoubleClickAction = DoubleClickActionBox.SelectedIndex switch
+            {
+                1 => "ExtractToArchiveFolder",
+                2 => "ExtractToPredefinedFolder",
+                3 => "PromptDestinationFolder",
+                4 => "ExtractHere",
+                _ => "OpenInFirezip"
+            };
+            _viewModel.DefaultExtractionFolder = DefaultExtractionFolderBox.Text;
             _viewModel.OpenFolderAfterExtraction = OpenFolderCheckBox.IsChecked ?? true;
+            _viewModel.KeepTaskProgressWindowOpen = KeepProgressWindowCheckBox.IsChecked ?? false;
+            _viewModel.DeleteArchiveAfterExtraction = DeleteSourceArchiveCheckBox.IsChecked ?? false;
             _viewModel.ConfirmBeforeOverwriting = ConfirmOverwriteCheckBox.IsChecked ?? true;
             _viewModel.ConfirmBeforeDeleting = ConfirmDeleteCheckBox.IsChecked ?? true;
-            _viewModel.AutoCloseTaskProgressWindow = AutoCloseProgressCheckBox.IsChecked ?? true;
             _viewModel.NotifyOnTaskCompletion = NotifyCompletionCheckBox.IsChecked ?? true;
             _viewModel.EnableContextMenu = ContextMenuCheckBox.IsChecked ?? true;
             _viewModel.UseCascadingContextMenu = CascadingMenuCheckBox.IsChecked ?? false;
@@ -168,6 +190,12 @@ public sealed partial class SettingsDialog : ContentDialog
         ShowStatus("Firezip is available in Open With. Choose it in Windows Settings to make it your default archive app.");
     }
 
+    private void OnOpenDefaultAppsClick(object sender, RoutedEventArgs e)
+    {
+        _viewModel.OpenDefaultAppsSettings();
+        ShowStatus("Abra as Configurações do Windows e selecione o Firezip para definir como padrão.");
+    }
+
     private void OnUnregisterAssociationsClick(object sender, RoutedEventArgs e)
     {
         _viewModel.UnregisterFileAssociations();
@@ -177,6 +205,22 @@ public sealed partial class SettingsDialog : ContentDialog
     private void OnOpenLogFolderClick(object sender, RoutedEventArgs e)
     {
         _viewModel.OpenLogFolder();
+    }
+
+    private async void OnBrowseExtractionFolderClick(object sender, RoutedEventArgs e)
+    {
+        var folderPicker = new FolderPicker();
+        folderPicker.SuggestedStartLocation = PickerLocationId.Desktop;
+        folderPicker.FileTypeFilter.Add("*");
+
+        var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(MainWindow.Current);
+        WinRT.Interop.InitializeWithWindow.Initialize(folderPicker, hwnd);
+
+        var folder = await folderPicker.PickSingleFolderAsync();
+        if (folder != null)
+        {
+            DefaultExtractionFolderBox.Text = folder.Path;
+        }
     }
 
     private void ShowStatus(string message)

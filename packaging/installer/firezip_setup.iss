@@ -2,7 +2,7 @@
 ; Generates silent-install capable, Winget-ready native Windows installer
 
 #define MyAppName "Firezip"
-#define MyAppVersion "1.0.0"
+#define MyAppVersion "1.0.1"
 #define MyAppPublisher "Firezip Contributors"
 #define MyAppURL "https://github.com/drodrigues55/firezip"
 #define MyAppExeName "Firezip.UI.exe"
@@ -25,11 +25,13 @@ SetupIconFile=..\..\src\Firezip.UI\Assets\AppIcon.ico
 UninstallDisplayIcon={app}\{#MyAppExeName}
 Compression=lzma2/ultra64
 SolidCompression=yes
+LZMAUseSeparateProcess=yes
 ArchitecturesAllowed=x64compatible
 ArchitecturesInstallIn64BitMode=x64compatible
 WizardStyle=modern
 ChangesAssociations=yes
 PrivilegesRequiredOverridesAllowed=commandline dialog
+UsedUserAreasWarning=no
 
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
@@ -74,7 +76,7 @@ Root: HKA; Subkey: "Software\Classes\Firezip.Archive\shell\ExtractTo"; ValueType
 Root: HKA; Subkey: "Software\Classes\Firezip.Archive\shell\ExtractTo"; ValueType: string; ValueName: "Icon"; ValueData: "{app}\{#MyAppExeName},0"; Flags: uninsdeletekey
 Root: HKA; Subkey: "Software\Classes\Firezip.Archive\shell\ExtractTo\command"; ValueType: string; ValueData: """{app}\{#MyAppExeName}"" --extract-to ""%1"""; Flags: uninsdeletekey
 
-; File associations
+; File associations in HKA (machine or per-user depending on install scope)
 Root: HKA; Subkey: "Software\Classes\.zip"; ValueType: string; ValueData: "Firezip.Archive"; Tasks: assoc_zip; Flags: uninsdeletevalue
 Root: HKA; Subkey: "Software\Classes\.7z"; ValueType: string; ValueData: "Firezip.Archive"; Tasks: assoc_7z; Flags: uninsdeletevalue
 Root: HKA; Subkey: "Software\Classes\.rar"; ValueType: string; ValueData: "Firezip.Archive"; Tasks: assoc_rar; Flags: uninsdeletevalue
@@ -82,9 +84,54 @@ Root: HKA; Subkey: "Software\Classes\.tar"; ValueType: string; ValueData: "Firez
 Root: HKA; Subkey: "Software\Classes\.gz"; ValueType: string; ValueData: "Firezip.Archive"; Tasks: assoc_tar; Flags: uninsdeletevalue
 Root: HKA; Subkey: "Software\Classes\.bz2"; ValueType: string; ValueData: "Firezip.Archive"; Tasks: assoc_tar; Flags: uninsdeletevalue
 
+; OpenWithProgids so Explorer lists Firezip in Open With
+Root: HKA; Subkey: "Software\Classes\.zip\OpenWithProgids"; ValueType: none; ValueName: "Firezip.Archive"; Tasks: assoc_zip; Flags: uninsdeletevalue
+Root: HKA; Subkey: "Software\Classes\.7z\OpenWithProgids"; ValueType: none; ValueName: "Firezip.Archive"; Tasks: assoc_7z; Flags: uninsdeletevalue
+Root: HKA; Subkey: "Software\Classes\.rar\OpenWithProgids"; ValueType: none; ValueName: "Firezip.Archive"; Tasks: assoc_rar; Flags: uninsdeletevalue
+Root: HKA; Subkey: "Software\Classes\.tar\OpenWithProgids"; ValueType: none; ValueName: "Firezip.Archive"; Tasks: assoc_tar; Flags: uninsdeletevalue
+Root: HKA; Subkey: "Software\Classes\.gz\OpenWithProgids"; ValueType: none; ValueName: "Firezip.Archive"; Tasks: assoc_tar; Flags: uninsdeletevalue
+Root: HKA; Subkey: "Software\Classes\.bz2\OpenWithProgids"; ValueType: none; ValueName: "Firezip.Archive"; Tasks: assoc_tar; Flags: uninsdeletevalue
+
+; Also write to HKCU so current user profile receives file association immediately
+Root: HKCU; Subkey: "Software\Classes\.zip"; ValueType: string; ValueData: "Firezip.Archive"; Tasks: assoc_zip; Flags: uninsdeletevalue
+Root: HKCU; Subkey: "Software\Classes\.7z"; ValueType: string; ValueData: "Firezip.Archive"; Tasks: assoc_7z; Flags: uninsdeletevalue
+Root: HKCU; Subkey: "Software\Classes\.rar"; ValueType: string; ValueData: "Firezip.Archive"; Tasks: assoc_rar; Flags: uninsdeletevalue
+Root: HKCU; Subkey: "Software\Classes\.tar"; ValueType: string; ValueData: "Firezip.Archive"; Tasks: assoc_tar; Flags: uninsdeletevalue
+Root: HKCU; Subkey: "Software\Classes\.gz"; ValueType: string; ValueData: "Firezip.Archive"; Tasks: assoc_tar; Flags: uninsdeletevalue
+Root: HKCU; Subkey: "Software\Classes\.bz2"; ValueType: string; ValueData: "Firezip.Archive"; Tasks: assoc_tar; Flags: uninsdeletevalue
+Root: HKCU; Subkey: "Software\Classes\.zip\OpenWithProgids"; ValueType: none; ValueName: "Firezip.Archive"; Tasks: assoc_zip; Flags: uninsdeletevalue
+Root: HKCU; Subkey: "Software\Classes\.7z\OpenWithProgids"; ValueType: none; ValueName: "Firezip.Archive"; Tasks: assoc_7z; Flags: uninsdeletevalue
+Root: HKCU; Subkey: "Software\Classes\.rar\OpenWithProgids"; ValueType: none; ValueName: "Firezip.Archive"; Tasks: assoc_rar; Flags: uninsdeletevalue
+Root: HKCU; Subkey: "Software\Classes\.tar\OpenWithProgids"; ValueType: none; ValueName: "Firezip.Archive"; Tasks: assoc_tar; Flags: uninsdeletevalue
+Root: HKCU; Subkey: "Software\Classes\.gz\OpenWithProgids"; ValueType: none; ValueName: "Firezip.Archive"; Tasks: assoc_tar; Flags: uninsdeletevalue
+Root: HKCU; Subkey: "Software\Classes\.bz2\OpenWithProgids"; ValueType: none; ValueName: "Firezip.Archive"; Tasks: assoc_tar; Flags: uninsdeletevalue
+
+; Windows Default Programs Capabilities (enables Firezip in Windows 10/11 Default Apps list)
+Root: HKA; Subkey: "Software\Firezip\Capabilities"; ValueType: string; ValueName: "ApplicationName"; ValueData: "{#MyAppName}"; Flags: uninsdeletekey
+Root: HKA; Subkey: "Software\Firezip\Capabilities"; ValueType: string; ValueName: "ApplicationDescription"; ValueData: "Firezip Archive Manager"; Flags: uninsdeletekey
+Root: HKA; Subkey: "Software\Firezip\Capabilities\FileAssociations"; ValueType: string; ValueName: ".zip"; ValueData: "Firezip.Archive"; Flags: uninsdeletekey
+Root: HKA; Subkey: "Software\Firezip\Capabilities\FileAssociations"; ValueType: string; ValueName: ".7z"; ValueData: "Firezip.Archive"; Flags: uninsdeletekey
+Root: HKA; Subkey: "Software\Firezip\Capabilities\FileAssociations"; ValueType: string; ValueName: ".rar"; ValueData: "Firezip.Archive"; Flags: uninsdeletekey
+Root: HKA; Subkey: "Software\Firezip\Capabilities\FileAssociations"; ValueType: string; ValueName: ".tar"; ValueData: "Firezip.Archive"; Flags: uninsdeletekey
+Root: HKA; Subkey: "Software\Firezip\Capabilities\FileAssociations"; ValueType: string; ValueName: ".gz"; ValueData: "Firezip.Archive"; Flags: uninsdeletekey
+Root: HKA; Subkey: "Software\Firezip\Capabilities\FileAssociations"; ValueType: string; ValueName: ".bz2"; ValueData: "Firezip.Archive"; Flags: uninsdeletekey
+Root: HKA; Subkey: "Software\RegisteredApplications"; ValueType: string; ValueName: "Firezip"; ValueData: "Software\Firezip\Capabilities"; Flags: uninsdeletevalue
+
+; Applications subkey for Windows Open With integration
+Root: HKA; Subkey: "Software\Classes\Applications\{#MyAppExeName}"; ValueType: string; ValueName: "FriendlyAppName"; ValueData: "{#MyAppName}"; Flags: uninsdeletekey
+Root: HKA; Subkey: "Software\Classes\Applications\{#MyAppExeName}\DefaultIcon"; ValueType: string; ValueData: "{app}\{#MyAppExeName},0"; Flags: uninsdeletekey
+Root: HKA; Subkey: "Software\Classes\Applications\{#MyAppExeName}\SupportedTypes"; ValueType: string; ValueName: ".zip"; ValueData: ""; Flags: uninsdeletekey
+Root: HKA; Subkey: "Software\Classes\Applications\{#MyAppExeName}\SupportedTypes"; ValueType: string; ValueName: ".7z"; ValueData: ""; Flags: uninsdeletekey
+Root: HKA; Subkey: "Software\Classes\Applications\{#MyAppExeName}\SupportedTypes"; ValueType: string; ValueName: ".rar"; ValueData: ""; Flags: uninsdeletekey
+Root: HKA; Subkey: "Software\Classes\Applications\{#MyAppExeName}\SupportedTypes"; ValueType: string; ValueName: ".tar"; ValueData: ""; Flags: uninsdeletekey
+Root: HKA; Subkey: "Software\Classes\Applications\{#MyAppExeName}\SupportedTypes"; ValueType: string; ValueName: ".gz"; ValueData: ""; Flags: uninsdeletekey
+Root: HKA; Subkey: "Software\Classes\Applications\{#MyAppExeName}\SupportedTypes"; ValueType: string; ValueName: ".bz2"; ValueData: ""; Flags: uninsdeletekey
+Root: HKA; Subkey: "Software\Classes\Applications\{#MyAppExeName}\shell\open\command"; ValueType: string; ValueData: """{app}\{#MyAppExeName}"" ""%1"""; Flags: uninsdeletekey
+
 [Run]
 Filename: "{sys}\schtasks.exe"; Parameters: "/Create /TN ""Firezip\FirezipUpdateTask"" /TR """"{app}\FirezipUpdater.exe"""" --auto --silent"" /SC DAILY /F"; Flags: runhidden; Tasks: autoupdate
 Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"; Flags: nowait postinstall skipifsilent
+Filename: "ms-settings:defaultapps"; Description: "Definir Firezip como aplicativo padrão nas Configurações do Windows"; Flags: postinstall shellexec skipifsilent unchecked
 
 [UninstallRun]
 Filename: "{sys}\schtasks.exe"; Parameters: "/Delete /TN ""Firezip\FirezipUpdateTask"" /F"; Flags: runhidden

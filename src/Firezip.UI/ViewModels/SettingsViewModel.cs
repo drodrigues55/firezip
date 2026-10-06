@@ -23,6 +23,15 @@ public partial class SettingsViewModel : ObservableObject
     private bool _openFolderAfterExtraction;
 
     [ObservableProperty]
+    private bool _keepTaskProgressWindowOpen;
+
+    [ObservableProperty]
+    private bool _deleteArchiveAfterExtraction;
+
+    [ObservableProperty]
+    private string _doubleClickAction = "OpenInFirezip";
+
+    [ObservableProperty]
     private bool _confirmBeforeOverwriting;
 
     [ObservableProperty]
@@ -116,6 +125,9 @@ public partial class SettingsViewModel : ObservableObject
         _language = _settingsService.Language;
         _defaultExtractionFolder = _settingsService.DefaultExtractionFolder;
         _openFolderAfterExtraction = _settingsService.OpenExtractedFolderAfterExtraction;
+        _keepTaskProgressWindowOpen = _settingsService.KeepTaskProgressWindowOpen;
+        _deleteArchiveAfterExtraction = _settingsService.DeleteArchiveAfterExtraction;
+        _doubleClickAction = _settingsService.DoubleClickAction;
         _confirmBeforeOverwriting = _settingsService.ConfirmBeforeOverwriting;
         _confirmBeforeDeleting = _settingsService.ConfirmBeforeDeleting;
         _defaultArchiveFormat = _settingsService.DefaultArchiveFormat;
@@ -127,7 +139,7 @@ public partial class SettingsViewModel : ObservableObject
         _notifyOnTaskCompletion = _settingsService.NotifyOnTaskCompletion;
         _autoCheckUpdates = _settingsService.AutoCheckUpdates;
         _updateCheckFrequency = _settingsService.UpdateCheckFrequency;
-        _lastCheckDisplay = _settingsService.LastUpdateCheckTime?.ToString("dd/MM/yyyy HH:mm") ?? "Nunca";
+        _lastCheckDisplay = _settingsService.LastUpdateCheckTime?.ToString("dd/MM/yyyy HH:mm", System.Globalization.CultureInfo.CurrentCulture) ?? "Nunca";
 
         var enabledCommands = _settingsService.EnabledContextMenuCommands;
         _enableOpenWith = enabledCommands.Contains("OpenWith", StringComparer.OrdinalIgnoreCase);
@@ -148,6 +160,9 @@ public partial class SettingsViewModel : ObservableObject
 
         _settingsService.DefaultExtractionFolder = DefaultExtractionFolder;
         _settingsService.OpenExtractedFolderAfterExtraction = OpenFolderAfterExtraction;
+        _settingsService.KeepTaskProgressWindowOpen = KeepTaskProgressWindowOpen;
+        _settingsService.DeleteArchiveAfterExtraction = DeleteArchiveAfterExtraction;
+        _settingsService.DoubleClickAction = DoubleClickAction;
         _settingsService.ConfirmBeforeOverwriting = ConfirmBeforeOverwriting;
         _settingsService.ConfirmBeforeDeleting = ConfirmBeforeDeleting;
         _settingsService.DefaultArchiveFormat = DefaultArchiveFormat;
@@ -239,7 +254,7 @@ public partial class SettingsViewModel : ObservableObject
                     : "Não foi possível verificar atualizações. O aplicativo funciona normalmente offline.";
             }
 
-            LastCheckDisplay = DateTime.Now.ToString("dd/MM/yyyy HH:mm");
+            LastCheckDisplay = DateTime.Now.ToString("dd/MM/yyyy HH:mm", System.Globalization.CultureInfo.CurrentCulture);
         }
         catch (Exception ex)
         {
@@ -271,6 +286,13 @@ public partial class SettingsViewModel : ObservableObject
     {
         FileAssociationManager.UnregisterAssociations();
         StatusMessage = "Unregistered Firezip file associations.";
+    }
+
+    public void OpenDefaultAppsSettings()
+    {
+        RegisterFileAssociations();
+        FileAssociationManager.OpenDefaultAppsSettings();
+        StatusMessage = "Abra as Configurações do Windows e selecione o Firezip como aplicativo padrão.";
     }
 
     public void OpenLogFolder()

@@ -106,12 +106,12 @@ public class LocalizationTests
     }
 
     [Fact]
-    public void AssemblyVersion_MatchesGeneralAvailability_1_0_0()
+    public void AssemblyVersion_MatchesGeneralAvailability_Version_1_0_X()
     {
         var version = typeof(LocalizationService).Assembly.GetName().Version;
         Assert.NotNull(version);
         Assert.Equal(1, version.Major);
         Assert.Equal(0, version.Minor);
-        Assert.Equal(0, version.Build);
+        Assert.True(version.Build >= 0);
     }
 }

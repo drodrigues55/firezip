@@ -18,7 +18,7 @@ public partial class ArchiveItemViewModel : ObservableObject
 
     public string FormattedSize => IsDirectory ? string.Empty : ArchiveEntry.FormatBytes(Size);
     public string FormattedCompressedSize => IsDirectory ? string.Empty : ArchiveEntry.FormatBytes(CompressedSize);
-    public string FormattedModified => ModifiedDate?.ToString("yyyy-MM-dd HH:mm:ss") ?? string.Empty;
+    public string FormattedModified => ModifiedDate?.ToString("yyyy-MM-dd HH:mm:ss", System.Globalization.CultureInfo.InvariantCulture) ?? string.Empty;
     public string FormattedRatio => CompressionRatio.HasValue && !IsDirectory ? $"{CompressionRatio.Value:F1}%" : string.Empty;
 
     public string IconGlyph => IsParentFolderLink

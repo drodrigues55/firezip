@@ -21,17 +21,43 @@
                     <ComboBoxItem Content="Português do Brasil (pt-BR)" Tag="pt-BR" />
                 </ComboBox>
 
+                <ComboBox x:Name="DoubleClickActionBox"
+                          Header="Ação ao dar duplo clique no arquivo (Bandizip style)"
+                          HorizontalAlignment="Stretch">
+                    <ComboBoxItem Content="Abrir no Firezip (Navegar no arquivo)" Tag="OpenInFirezip" />
+                    <ComboBoxItem Content="Extrair para pasta com nome do arquivo [Recomendado]" Tag="ExtractToArchiveFolder" />
+                    <ComboBoxItem Content="Extrair para pasta pré-definida" Tag="ExtractToPredefinedFolder" />
+                    <ComboBoxItem Content="Selecionar pasta de destino..." Tag="PromptDestinationFolder" />
+                    <ComboBoxItem Content="Extrair aqui (na mesma pasta do arquivo)" Tag="ExtractHere" />
+                </ComboBox>
+
+                <Grid ColumnSpacing="8">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <TextBox x:Name="DefaultExtractionFolderBox"
+                             Header="Pasta pré-definida de extração"
+                             PlaceholderText="Deixe em branco para usar a pasta do arquivo" />
+                    <Button Content="Procurar..."
+                            VerticalAlignment="Bottom"
+                            Click="OnBrowseExtractionFolderClick" />
+                </Grid>
+
                 <CheckBox x:Name="OpenFolderCheckBox"
-                          Content="Open extracted folder automatically after extraction" />
+                          Content="Abrir pasta recém-extraída automaticamente" />
+
+                <CheckBox x:Name="KeepProgressWindowCheckBox"
+                          Content="Manter janela de progresso aberta após concluir extração" />
+
+                <CheckBox x:Name="DeleteSourceArchiveCheckBox"
+                          Content="Excluir arquivo compactado original (.zip) após extrair com sucesso" />
 
                 <CheckBox x:Name="ConfirmOverwriteCheckBox"
                           Content="Confirm before overwriting existing files" />
 
                 <CheckBox x:Name="ConfirmDeleteCheckBox"
                           Content="Confirm before deleting items from archive" />
-
-                <CheckBox x:Name="AutoCloseProgressCheckBox"
-                          Content="Auto-close task progress window on successful completion" />
 
                 <CheckBox x:Name="NotifyCompletionCheckBox"
                           Content="Show Windows notification when background task completes" />
@@ -95,6 +121,9 @@
                 <StackPanel Orientation="Horizontal" Spacing="8">
                     <Button Content="Add Firezip to Open With"
                             Click="OnRegisterAssociationsClick" />
+                    <Button Content="Definir como Padrão no Windows"
+                            Style="{ThemeResource AccentButtonStyle}"
+                            Click="OnOpenDefaultAppsClick" />
                     <Button Content="Remove from Open With"
                             Click="OnUnregisterAssociationsClick" />
                 </StackPanel>

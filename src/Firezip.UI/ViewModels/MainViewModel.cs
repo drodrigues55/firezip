@@ -10,7 +10,7 @@ using Firezip.Windows.Shell;
 
 namespace Firezip.UI.ViewModels;
 
-public partial class MainViewModel : ObservableObject
+public partial class MainViewModel : ObservableObject, IDisposable
 {
     private readonly IArchiveEngine _engine;
     private readonly ISettingsService _settingsService;
@@ -788,5 +788,20 @@ public partial class MainViewModel : ObservableObject
             await ShowErrorCallback(title, message, details);
         else
             ShowNotificationCallback?.Invoke(title, "The operation could not be completed. Open the error details for more information.");
+    }
+
+    public void Dispose()
+    {
+        Dispose(true);
+        GC.SuppressFinalize(this);
+    }
+
+    protected virtual void Dispose(bool disposing)
+    {
+        if (disposing)
+        {
+            _activeCts?.Dispose();
+            _activeCts = null;
+        }
     }
 }

@@ -6,6 +6,9 @@ public class AppSettings
 {
     public string DefaultExtractionFolder { get; set; } = string.Empty;
     public bool OpenExtractedFolderAfterExtraction { get; set; } = true;
+    public bool KeepTaskProgressWindowOpen { get; set; } = false;
+    public bool DeleteArchiveAfterExtraction { get; set; } = false;
+    public string DoubleClickAction { get; set; } = "OpenInFirezip";
     public bool ConfirmBeforeOverwriting { get; set; } = true;
     public bool ConfirmBeforeDeleting { get; set; } = true;
     public ArchiveFormat DefaultArchiveFormat { get; set; } = ArchiveFormat.Zip;

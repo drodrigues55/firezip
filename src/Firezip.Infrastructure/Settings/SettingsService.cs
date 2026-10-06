@@ -22,6 +22,24 @@ public class SettingsService : ISettingsService
         set => _settings.OpenExtractedFolderAfterExtraction = value;
     }
 
+    public bool KeepTaskProgressWindowOpen
+    {
+        get => _settings.KeepTaskProgressWindowOpen;
+        set => _settings.KeepTaskProgressWindowOpen = value;
+    }
+
+    public bool DeleteArchiveAfterExtraction
+    {
+        get => _settings.DeleteArchiveAfterExtraction;
+        set => _settings.DeleteArchiveAfterExtraction = value;
+    }
+
+    public string DoubleClickAction
+    {
+        get => _settings.DoubleClickAction;
+        set => _settings.DoubleClickAction = value;
+    }
+
     public bool ConfirmBeforeOverwriting
     {
         get => _settings.ConfirmBeforeOverwriting;
@@ -144,10 +162,27 @@ public class SettingsService : ISettingsService
         }
         else
         {
-            var appData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-            var folder = Path.Combine(appData, "Firezip");
+            // Isolated user preferences directory: %APPDATA%\Firezip (Roaming)
+            // Preserved across complete uninstallation, clean reinstallation, and updates.
+            var roamingAppData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+            var folder = Path.Combine(roamingAppData, "Firezip");
             Directory.CreateDirectory(folder);
             _settingsFilePath = Path.Combine(folder, "settings.json");
+
+            // Migration check: If LocalApplicationData exists but Roaming doesn't, migrate it seamlessly
+            var localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+            var legacyFilePath = Path.Combine(localAppData, "Firezip", "settings.json");
+            if (!File.Exists(_settingsFilePath) && File.Exists(legacyFilePath))
+            {
+                try
+                {
+                    File.Copy(legacyFilePath, _settingsFilePath, true);
+                }
+                catch
+                {
+                    // Fallback ignored
+                }
+            }
         }
 
         _settings = new AppSettings();
