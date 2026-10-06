@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "Firezip.UI (Package)": {
+      "commandName": "MsixPackage"
+    },
+    "Firezip.UI (Unpackaged)": {
+      "commandName": "Project"
+    }
+  }
+}

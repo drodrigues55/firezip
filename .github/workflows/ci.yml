@@ -1,0 +1,33 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  validate:
+    runs-on: windows-latest
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Set up .NET 10
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Restore
+        run: dotnet restore Firezip.slnx
+
+      - name: Check C# formatting
+        run: dotnet format whitespace Firezip.slnx --verify-no-changes --no-restore
+
+      - name: Build UI
+        run: dotnet build src/Firezip.UI/Firezip.UI.csproj --configuration Release --no-restore
+
+      - name: Build benchmark harness
+        run: dotnet build src/Firezip.Benchmarks/Firezip.Benchmarks.csproj --configuration Release --no-restore
+
+      - name: Run tests
+        run: dotnet test src/Firezip.Tests/Firezip.Tests.csproj --configuration Release --no-restore --logger "console;verbosity=minimal"

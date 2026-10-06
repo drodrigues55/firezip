@@ -1,0 +1,18 @@
+<Project>
+  <PropertyGroup>
+    <Version>1.0.0</Version>
+    <AssemblyVersion>1.0.0.0</AssemblyVersion>
+    <FileVersion>1.0.0.0</FileVersion>
+    <Product>Firezip</Product>
+    <Company>Firezip Open Source Team</Company>
+    <Authors>Firezip Authors</Authors>
+    <Copyright>Copyright © 2026 Firezip Authors</Copyright>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/drodrigues55/firezip</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/drodrigues55/firezip</RepositoryUrl>
+    <Description>Ultra-fast, modern, privacy-friendly archive manager crafted for Windows 11.</Description>
+    <EnableNETAnalyzers>true</EnableNETAnalyzers>
+    <AnalysisLevel>latest-recommended</AnalysisLevel>
+    <RunAnalyzersDuringBuild>true</RunAnalyzersDuringBuild>
+  </PropertyGroup>
+</Project>

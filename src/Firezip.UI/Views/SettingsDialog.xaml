@@ -1,0 +1,170 @@
+<ContentDialog
+    x:Class="Firezip.UI.Views.SettingsDialog"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    Title="Settings &amp; Explorer Integration"
+    PrimaryButtonText="Save"
+    CloseButtonText="Cancel"
+    DefaultButton="Primary">
+
+    <ScrollViewer MaxHeight="520" Width="480">
+        <StackPanel Spacing="20" Margin="0,0,16,0">
+            <!-- General Settings -->
+            <StackPanel Spacing="10">
+                <TextBlock Text="General Preferences" FontWeight="SemiBold" FontSize="15" />
+
+                <ComboBox x:Name="LanguageComboBox"
+                          Header="Language / Idioma"
+                          HorizontalAlignment="Stretch">
+                    <ComboBoxItem Content="Padrão do Sistema (System Default)" Tag="System" />
+                    <ComboBoxItem Content="English (en-US)" Tag="en-US" />
+                    <ComboBoxItem Content="Português do Brasil (pt-BR)" Tag="pt-BR" />
+                </ComboBox>
+
+                <CheckBox x:Name="OpenFolderCheckBox"
+                          Content="Open extracted folder automatically after extraction" />
+
+                <CheckBox x:Name="ConfirmOverwriteCheckBox"
+                          Content="Confirm before overwriting existing files" />
+
+                <CheckBox x:Name="ConfirmDeleteCheckBox"
+                          Content="Confirm before deleting items from archive" />
+
+                <CheckBox x:Name="AutoCloseProgressCheckBox"
+                          Content="Auto-close task progress window on successful completion" />
+
+                <CheckBox x:Name="NotifyCompletionCheckBox"
+                          Content="Show Windows notification when background task completes" />
+            </StackPanel>
+
+            <!-- Compression Defaults -->
+            <StackPanel Spacing="10">
+                <TextBlock Text="Default Compression" FontWeight="SemiBold" FontSize="15" />
+
+                <ComboBox x:Name="DefaultFormatBox"
+                          Header="Default Archive Format"
+                          HorizontalAlignment="Stretch">
+                    <ComboBoxItem Content="ZIP (.zip)" />
+                    <ComboBoxItem Content="7-Zip (.7z)" />
+                    <ComboBoxItem Content="TAR (.tar)" />
+                </ComboBox>
+
+                <ComboBox x:Name="DefaultLevelBox"
+                          Header="Default Compression Level"
+                          HorizontalAlignment="Stretch">
+                    <ComboBoxItem Content="Store" />
+                    <ComboBoxItem Content="Fast" />
+                    <ComboBoxItem Content="Normal (Balanced)" />
+                    <ComboBoxItem Content="Maximum" />
+                    <ComboBoxItem Content="Ultra" />
+                </ComboBox>
+            </StackPanel>
+
+            <!-- Windows Explorer Integration -->
+            <StackPanel Spacing="10">
+                <TextBlock Text="Windows Explorer Integration" FontWeight="SemiBold" FontSize="15" />
+
+                <CheckBox x:Name="ContextMenuCheckBox"
+                          Content="Enable Windows Explorer right-click context menu (Extract Here, Compress...)"
+                          Checked="OnContextMenuMasterChanged"
+                          Unchecked="OnContextMenuMasterChanged" />
+
+                <CheckBox x:Name="CascadingMenuCheckBox"
+                          Margin="20,0,0,0"
+                          Content="Group commands into a cascading submenu (Firezip &gt;)" />
+
+                <ContentControl x:Name="ContextMenuEntriesPanel" Margin="20,0,0,0">
+                    <StackPanel Spacing="4">
+                        <TextBlock Text="Show these commands" FontSize="12"
+                                   Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                        <CheckBox x:Name="OpenWithCheckBox" Content="Open with Firezip" />
+                        <CheckBox x:Name="ExtractHereCheckBox" Content="Extract Here" />
+                        <CheckBox x:Name="ExtractToFolderCheckBox" Content="Extract to archive folder" />
+                        <CheckBox x:Name="ExtractToCheckBox" Content="Extract to..." />
+                        <CheckBox x:Name="CompressToZipCheckBox" Content="Compress to ZIP" />
+                        <CheckBox x:Name="CompressTo7zCheckBox" Content="Compress to 7Z" />
+                    </StackPanel>
+                </ContentControl>
+
+                <TextBlock Text="File Associations" FontWeight="Medium" Margin="0,4,0,0" />
+                <TextBlock Text="Add Firezip to Open With for supported archive types (.zip, .zipx, .jar, .apk, .7z, .rar, .tar, .gz, .bz2, .xz)"
+                           Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                           TextWrapping="Wrap"
+                           FontSize="12" />
+
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <Button Content="Add Firezip to Open With"
+                            Click="OnRegisterAssociationsClick" />
+                    <Button Content="Remove from Open With"
+                            Click="OnUnregisterAssociationsClick" />
+                </StackPanel>
+            </StackPanel>
+
+            <!-- Updates & Maintenance -->
+            <StackPanel Spacing="10">
+                <TextBlock Text="Atualizações do Aplicativo" FontWeight="SemiBold" FontSize="15" />
+
+                <CheckBox x:Name="AutoCheckUpdatesCheckBox"
+                          Content="Verificar atualizações automaticamente" />
+
+                <ComboBox x:Name="UpdateFrequencyBox"
+                          Header="Frequência da verificação"
+                          HorizontalAlignment="Stretch">
+                    <ComboBoxItem Content="Diariamente (Daily)" Tag="Daily" />
+                    <ComboBoxItem Content="Semanalmente (Weekly)" Tag="Weekly" />
+                    <ComboBoxItem Content="Mensalmente (Monthly)" Tag="Monthly" />
+                </ComboBox>
+
+                <Grid ColumnSpacing="16" Margin="0,4,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock x:Name="CurrentVersionTextBlock"
+                               Grid.Column="0"
+                               Text="Versão atual: v1.0.0"
+                               FontSize="12"
+                               Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                    <TextBlock x:Name="LastCheckTextBlock"
+                               Grid.Column="1"
+                               Text="Última verificação: Nunca"
+                               FontSize="12"
+                               Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                </Grid>
+
+                <StackPanel Orientation="Horizontal" Spacing="12" Margin="0,6,0,0">
+                    <Button x:Name="CheckUpdatesButton"
+                            Content="Verificar agora"
+                            Click="OnCheckUpdatesClick" />
+                    <Button x:Name="ApplyUpdateButton"
+                            Content="Instalar Atualização"
+                            Style="{ThemeResource AccentButtonStyle}"
+                            Visibility="Collapsed"
+                            Click="OnApplyUpdateClick" />
+                    <ProgressRing x:Name="UpdateProgressRing"
+                                  Width="20" Height="20"
+                                  IsActive="False"
+                                  Visibility="Collapsed" />
+                </StackPanel>
+
+                <TextBlock x:Name="UpdateStatusTextBlock"
+                           TextWrapping="Wrap"
+                           FontSize="12"
+                           Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"
+                           Visibility="Collapsed" />
+            </StackPanel>
+
+            <!-- Diagnostics & Logs -->
+            <StackPanel Spacing="10">
+                <TextBlock Text="Diagnostics &amp; Logs" FontWeight="SemiBold" FontSize="15" />
+                <Button Content="Open Log Folder"
+                        Click="OnOpenLogFolderClick" />
+            </StackPanel>
+
+            <TextBlock x:Name="StatusTextBlock"
+                       Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"
+                       FontWeight="Medium"
+                       Visibility="Collapsed" />
+        </StackPanel>
+    </ScrollViewer>
+</ContentDialog>

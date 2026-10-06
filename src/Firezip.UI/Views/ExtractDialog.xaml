@@ -1,0 +1,49 @@
+<ContentDialog
+    x:Class="Firezip.UI.Views.ExtractDialog"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    Title="Extract Archive"
+    PrimaryButtonText="Extract"
+    CloseButtonText="Cancel"
+    DefaultButton="Primary">
+
+    <StackPanel Spacing="16" Width="440">
+        <TextBlock Text="Choose destination directory and extraction preferences:"
+                   TextWrapping="Wrap" />
+
+        <Grid ColumnSpacing="8">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+
+            <TextBox x:Name="DestinationPathBox"
+                     Header="Destination Folder"
+                     PlaceholderText="Select target directory..." />
+
+            <Button x:Name="BrowseButton"
+                    Grid.Column="1"
+                    VerticalAlignment="Bottom"
+                    Content="Browse..."
+                    Click="OnBrowseClick" />
+        </Grid>
+
+        <CheckBox x:Name="SubfolderCheckBox"
+                  Content="Extract to folder named after archive"
+                  IsChecked="True" />
+
+        <CheckBox x:Name="OpenFolderCheckBox"
+                  Content="Open destination folder after extraction completes"
+                  IsChecked="True" />
+
+        <ComboBox x:Name="ConflictPolicyBox"
+                  Header="When destination file already exists"
+                  SelectedIndex="0"
+                  HorizontalAlignment="Stretch">
+            <ComboBoxItem Content="Ask for confirmation (recommended)" />
+            <ComboBoxItem Content="Overwrite existing files" />
+            <ComboBoxItem Content="Skip existing files" />
+            <ComboBoxItem Content="Auto-rename new files (e.g. file (1).txt)" />
+        </ComboBox>
+    </StackPanel>
+</ContentDialog>

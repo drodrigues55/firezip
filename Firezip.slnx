@@ -1,0 +1,13 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Firezip.Benchmarks/Firezip.Benchmarks.csproj" />
+    <Project Path="src/Firezip.Core/Firezip.Core.csproj" />
+    <Project Path="src/Firezip.Formats/Firezip.Formats.csproj" />
+    <Project Path="src/Firezip.Infrastructure/Firezip.Infrastructure.csproj" />
+    <Project Path="src/Firezip.Launcher/Firezip.Launcher.csproj" />
+    <Project Path="src/Firezip.Tests/Firezip.Tests.csproj" />
+    <Project Path="src/Firezip.UI/Firezip.UI.csproj" />
+    <Project Path="src/Firezip.Updater/Firezip.Updater.csproj" />
+    <Project Path="src/Firezip.Windows/Firezip.Windows.csproj" />
+  </Folder>
+</Solution>
